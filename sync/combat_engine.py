@@ -6,11 +6,9 @@ State machine : en_attente → en_cours → termine
 import psycopg2.extras
 import badge_engine
 
-OR_VICTOIRE_BASE = 10  # récompense minimale même à mise 0
+OR_VICTOIRE_BASE = 10
 
 # Actions disponibles : (id, label, multiplicateur, description, malus_vitesse)
-# malus_vitesse réduit la force effective de l'attaquant dans le calcul d'esquive :
-# une attaque lente est plus facile à esquiver même si elle fait plus de dégâts.
 ACTIONS = [
     ("rapide",   "Attaque Rapide",   1.0,  "Coup sûr — vitesse pleine",          0.00),
     ("lourde",   "Frappe Lourde",    1.8,  "Dégâts élevés — frappe plus lente",  0.20),
@@ -19,6 +17,8 @@ ACTIONS = [
 ]
 ACTIONS_MAP = {a[0]: a for a in ACTIONS}
 
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _get_joueur(cur, joueur_id):
     cur.execute("SELECT * FROM joueurs WHERE id = %s", (joueur_id,))
@@ -30,41 +30,63 @@ def _get_equipements(cur, joueur_id):
     return [dict(r) for r in cur.fetchall()]
 
 
+def _passif(equipements: list, type_item: str) -> str | None:
+    """Retourne le passif_code de l'item équipé du type donné, ou None."""
+    for e in equipements:
+        if e["type"] == type_item:
+            return e.get("passif_code")
+    return None
+
+
+def _bonus_eq(equipements: list, bonus_stat: str) -> int:
+    """Somme valeur_bonus + amelioration*2 pour tous les items d'un stat donné."""
+    return sum(
+        e["valeur_bonus"] + e.get("amelioration", 0) * 2
+        for e in equipements if e["bonus_stat"] == bonus_stat
+    )
+
+
+# ── Stats ─────────────────────────────────────────────────────────────────────
+
 def pv_max(joueur: dict, equipements: list) -> int:
-    """PV max = constitution × 5 + bonus armure constitution."""
-    base = joueur["constitution_pv"] * 5
-    bonus = sum(e["valeur_bonus"] for e in equipements if e["bonus_stat"] == "constitution_pv")
-    return base + bonus
+    transcendance = joueur["level"] // 2 if _passif(equipements, "amul") == "transcendance" else 0
+    constitution  = joueur["constitution_pv"] + transcendance
+    return constitution * 5 + _bonus_eq(equipements, "constitution_pv")
 
 
 def force_effective(joueur: dict, equipements: list) -> int:
-    return joueur["force_p"] + sum(
-        e["valeur_bonus"] for e in equipements if e["bonus_stat"] == "force_p"
-    )
+    transcendance = joueur["level"] // 2 if _passif(equipements, "amul") == "transcendance" else 0
+    return joueur["force_p"] + transcendance + _bonus_eq(equipements, "force_p")
 
 
 def resistance_effective(joueur: dict, equipements: list) -> int:
-    return joueur["esprit_res"] + sum(
-        e["valeur_bonus"] for e in equipements if e["bonus_stat"] == "esprit_res"
-    )
+    transcendance = joueur["level"] // 2 if _passif(equipements, "amul") == "transcendance" else 0
+    base = joueur["esprit_res"] + transcendance + _bonus_eq(equipements, "esprit_res")
+    # Armure de Plates (T3) : +5% de résistance basée sur les PV max
+    if _passif(equipements, "armure") == "bouclier_pv":
+        base += round(pv_max(joueur, equipements) * 0.05)
+    return base
 
 
 def agilite_effective(joueur: dict, equipements: list) -> int:
-    return joueur["agilite_vit"] + sum(
-        e["valeur_bonus"] for e in equipements if e["bonus_stat"] == "agilite_vit"
-    )
+    transcendance = joueur["level"] // 2 if _passif(equipements, "amul") == "transcendance" else 0
+    return joueur["agilite_vit"] + transcendance + _bonus_eq(equipements, "agilite_vit")
 
 
-def chance_esquive(agilite_def: int, force_att: int) -> float:
-    """5% de base + 1% par point d'agilité du défenseur − 1% par point de force de l'attaquant.
-    La force de l'attaquant rend sa frappe plus rapide, donc plus difficile à esquiver.
-    Plafonnée à 50%, plancher à 0%.
+def chance_esquive(agilite_def: int, force_att: float,
+                   niveau_def: int = 0, eq_def: list = None) -> float:
+    """5% + 1%/pt AGI défenseur − 1%/pt force attaquant.
+    Talisman Runique : +0.5% par niveau de personnage. Plafond 50%.
     """
-    return max(0.0, min(0.50, 0.05 + (agilite_def - force_att) * 0.01))
+    base = max(0.0, min(0.50, 0.05 + (agilite_def - force_att) * 0.01))
+    if eq_def and _passif(eq_def, "amul") == "celerite_niveau":
+        base = min(0.50, base + niveau_def * 0.005)
+    return base
 
+
+# ── Création / Acceptation ────────────────────────────────────────────────────
 
 def creer_combat(conn, attaquant_id: int, defenseur_id: int, mise: int = 0) -> int:
-    """Crée un combat en_attente avec la mise fixée par l'attaquant."""
     with conn.cursor() as cur:
         cur.execute("""
             INSERT INTO combats (attaquant_id, defenseur_id, statut, mise)
@@ -76,7 +98,6 @@ def creer_combat(conn, attaquant_id: int, defenseur_id: int, mise: int = 0) -> i
 
 
 def accepter_combat(conn, combat_id: int):
-    """Le défenseur accepte → calcul initiative → passage en en_cours."""
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute("SELECT * FROM combats WHERE id = %s", (combat_id,))
         combat = dict(cur.fetchone())
@@ -86,39 +107,34 @@ def accepter_combat(conn, combat_id: int):
         eq_a = _get_equipements(cur, att["id"])
         eq_d = _get_equipements(cur, dfn["id"])
 
-        pv_a = pv_max(att, eq_a)
-        pv_d = pv_max(dfn, eq_d)
-
-        # Initiative : le plus agile attaque en premier (égalité → attaquant)
-        agi_a = agilite_effective(att, eq_a)
-        agi_d = agilite_effective(dfn, eq_d)
+        pv_a   = pv_max(att, eq_a)
+        pv_d   = pv_max(dfn, eq_d)
+        agi_a  = agilite_effective(att, eq_a)
+        agi_d  = agilite_effective(dfn, eq_d)
         premier = att["id"] if agi_a >= agi_d else dfn["id"]
 
         mise = combat["mise"]
-        # Débiter la mise des deux joueurs
         if mise > 0:
             cur.execute("UPDATE joueurs SET or_monnaie = or_monnaie - %s WHERE id = %s", (mise, att["id"]))
             cur.execute("UPDATE joueurs SET or_monnaie = or_monnaie - %s WHERE id = %s", (mise, dfn["id"]))
 
         mise_info = f" | Mise : {mise} or chacun (pot : {mise * 2} or)" if mise > 0 else ""
-        log = (f"Combat commencé ! Initiative : {att['username'] if premier == att['id'] else dfn['username']} "
+        log = (f"Combat commencé ! Initiative : "
+               f"{att['username'] if premier == att['id'] else dfn['username']} "
                f"(AGI {max(agi_a, agi_d)} vs {min(agi_a, agi_d)}){mise_info}\n")
 
         cur.execute("""
             UPDATE combats
             SET statut='en_cours', tour_de_qui=%s,
-                pv_attaquant=%s, pv_defenseur=%s,
-                log_combat=%s
+                pv_attaquant=%s, pv_defenseur=%s, log_combat=%s
             WHERE id=%s
         """, (premier, pv_a, pv_d, log, combat_id))
     conn.commit()
 
 
+# ── Tour de jeu ───────────────────────────────────────────────────────────────
+
 def jouer_action(conn, combat_id: int, joueur_id: int, action_id: str) -> dict:
-    """
-    Joue une action pour joueur_id dans le combat.
-    Retourne un dict avec le résultat du tour.
-    """
     import random
 
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -130,8 +146,8 @@ def jouer_action(conn, combat_id: int, joueur_id: int, action_id: str) -> dict:
         if combat["tour_de_qui"] != joueur_id:
             return {"erreur": "Ce n'est pas ton tour."}
 
-        att_id = combat["attaquant_id"]
-        dfn_id = combat["defenseur_id"]
+        att_id        = combat["attaquant_id"]
+        dfn_id        = combat["defenseur_id"]
         est_attaquant = (joueur_id == att_id)
 
         attaqueur = _get_joueur(cur, joueur_id)
@@ -148,30 +164,87 @@ def jouer_action(conn, combat_id: int, joueur_id: int, action_id: str) -> dict:
         action = ACTIONS_MAP.get(action_id, ACTIONS_MAP["rapide"])
         _, label, multiplicateur, _, malus_vitesse = action
 
-        degats = 0
+        degats     = 0
+        extra_logs = []
+
+        # ── Régénération (Pendentif de l'Aube T3) — début de tour ────────────
+        if _passif(eq_att, "amul") == "regeneration":
+            regen = max(1, round(pv_max(attaqueur, eq_att) * 0.05))
+            pv_att_now = min(pv_max(attaqueur, eq_att), pv_att_now + regen)
+            extra_logs.append(f"  ↺ {attaqueur['username']} Régénération (+{regen} PV)")
+
         log_ligne = f"  {attaqueur['username']} → {label}"
 
         if action_id == "repos":
             soin = max(1, int(pv_max(attaqueur, eq_att) * 0.15))
             pv_att_now = min(pv_max(attaqueur, eq_att), pv_att_now + soin)
             log_ligne += f" (+{soin} PV récupérés)"
+
         else:
             force        = force_effective(attaqueur, eq_att)
-            force_rapide = force * (1 - malus_vitesse)  # force réduite selon vitesse de l'attaque
+            force_rapide = force * (1 - malus_vitesse)
             agi_def      = agilite_effective(cible, eq_def)
-            esquive      = chance_esquive(agi_def, force_rapide)
+            esquive      = chance_esquive(agi_def, force_rapide, cible["level"], eq_def)
+
             if random.random() < esquive:
                 log_ligne += f" — ESQUIVÉ ! ({cible['username']} : {pv_def_now} PV)"
-            else:
-                res    = resistance_effective(cible, eq_def)
-                degats = max(1, int(force * multiplicateur) - res)
-                pv_def_now = max(0, pv_def_now - degats)
-                log_ligne += f" — {degats} dégâts ! ({cible['username']} : {pv_def_now} PV)"
 
-        # Prochain tour
-        prochain = cible_id if pv_def_now > 0 else None
-        nouveau_statut = "en_cours" if pv_def_now > 0 else "termine"
-        nouveau_log = combat["log_combat"] + log_ligne + "\n"
+            else:
+                # ── Immunité (Armure du Néant T5) ────────────────────────────
+                if _passif(eq_def, "armure") == "immunite" and random.random() < 0.25:
+                    log_ligne += f" — IMMUNITÉ ! ({cible['username']} : {pv_def_now} PV)"
+
+                else:
+                    res    = resistance_effective(cible, eq_def)
+                    degats = max(1, int(force * multiplicateur) - res)
+
+                    # ── Exécution (Épée du Néant T5) ─────────────────────────
+                    if _passif(eq_att, "arme") == "execution":
+                        if pv_def_now < pv_max(cible, eq_def) * 0.20:
+                            degats = round(degats * 1.5)
+                            log_ligne += " [💀Exécution]"
+
+                    # ── Saignement (Épée de Mithril T3) ──────────────────────
+                    if _passif(eq_att, "arme") == "saignement" and random.random() < 0.20:
+                        degats += 3
+                        log_ligne += " [⚡Saignement]"
+
+                    pv_def_now = max(0, pv_def_now - degats)
+                    log_ligne += f" — {degats} dégâts ! ({cible['username']} : {pv_def_now} PV)"
+
+                    # ── Vampirisme (Lame Runique T4) ──────────────────────────
+                    if _passif(eq_att, "arme") == "vampirisme" and degats > 0:
+                        soin_vamp = max(1, round(degats * 0.25))
+                        pv_att_now = min(pv_max(attaqueur, eq_att), pv_att_now + soin_vamp)
+                        log_ligne += f" [🩸+{soin_vamp} PV]"
+
+                    # ── Épines (Armure Runique T4) ────────────────────────────
+                    if _passif(eq_def, "armure") == "epines" and degats > 0:
+                        reflet = max(1, round(degats * 0.15))
+                        pv_att_now = max(0, pv_att_now - reflet)
+                        log_ligne += f" [🔥Épines -{reflet}]"
+
+        # ── Construire le log final ───────────────────────────────────────────
+        nouveau_log = combat["log_combat"]
+        for l in extra_logs:
+            nouveau_log += l + "\n"
+        nouveau_log += log_ligne + "\n"
+
+        # ── Déterminer le vainqueur ───────────────────────────────────────────
+        if pv_def_now <= 0:
+            nouveau_statut = "termine"
+            vainqueur_id   = joueur_id
+            perdant_id     = cible_id
+        elif pv_att_now <= 0:
+            nouveau_statut = "termine"
+            vainqueur_id   = cible_id
+            perdant_id     = joueur_id
+        else:
+            nouveau_statut = "en_cours"
+            vainqueur_id   = None
+            perdant_id     = None
+
+        prochain = cible_id if nouveau_statut == "en_cours" else None
 
         new_pv_att = pv_att_now if est_attaquant else pv_def_now
         new_pv_def = pv_def_now if est_attaquant else pv_att_now
@@ -179,14 +252,12 @@ def jouer_action(conn, combat_id: int, joueur_id: int, action_id: str) -> dict:
         cur.execute("""
             UPDATE combats
             SET statut=%s, tour_de_qui=%s,
-                pv_attaquant=%s, pv_defenseur=%s,
-                log_combat=%s
+                pv_attaquant=%s, pv_defenseur=%s, log_combat=%s
             WHERE id=%s
         """, (nouveau_statut, prochain, new_pv_att, new_pv_def, nouveau_log, combat_id))
 
         if nouveau_statut == "termine":
-            vainqueur_id = joueur_id
-            vainqueur    = _get_joueur(cur, vainqueur_id)
+            vainqueur = _get_joueur(cur, vainqueur_id)
             gain = combat["mise"] * 2 + OR_VICTOIRE_BASE
             cur.execute(
                 "UPDATE joueurs SET or_monnaie = or_monnaie + %s WHERE id = %s",
@@ -201,13 +272,15 @@ def jouer_action(conn, combat_id: int, joueur_id: int, action_id: str) -> dict:
 
     nouveaux_badges = []
     if nouveau_statut == "termine":
+        # L'action gagnante est celle du vainqueur : action_id si c'est joueur_id qui gagne
+        action_gagnante = action_id if vainqueur_id == joueur_id else "?"
         nouveaux_badges = badge_engine.verifier_badges_combat(
             conn,
-            vainqueur_id   = joueur_id,
-            mise           = combat["mise"],
-            action_gagnante = action_id,
-            log_combat     = nouveau_log,
-            username_vainqueur = attaqueur["username"],
+            vainqueur_id       = vainqueur_id,
+            mise               = combat["mise"],
+            action_gagnante    = action_gagnante,
+            log_combat         = nouveau_log,
+            username_vainqueur = vainqueur["username"],
         )
 
     return {
@@ -226,7 +299,6 @@ def get_combat(conn, combat_id: int) -> dict | None:
 
 
 def get_combats_joueur(conn, joueur_id: int) -> list:
-    """Retourne les combats en attente ou en cours impliquant ce joueur."""
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute("""
             SELECT c.*,

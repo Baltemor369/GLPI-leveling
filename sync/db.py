@@ -36,7 +36,11 @@ CREATE TABLE IF NOT EXISTS equipements (
     type            VARCHAR(10)  NOT NULL CHECK (type IN ('arme','armure','amul')),
     bonus_stat      VARCHAR(20)  NOT NULL,
     valeur_bonus    INTEGER NOT NULL DEFAULT 0,
-    equipe          BOOLEAN NOT NULL DEFAULT FALSE
+    equipe          BOOLEAN NOT NULL DEFAULT FALSE,
+    amelioration    INTEGER NOT NULL DEFAULT 0,
+    passif_code     VARCHAR(30),
+    cout_base       INTEGER NOT NULL DEFAULT 0,
+    tier            INTEGER NOT NULL DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS tickets_traites (
@@ -59,6 +63,21 @@ CREATE TABLE IF NOT EXISTS sessions (
     joueur_id   INTEGER NOT NULL REFERENCES joueurs(id),
     username    VARCHAR(100) NOT NULL,
     expires     TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS expeditions (
+    id          SERIAL PRIMARY KEY,
+    joueur_id   INTEGER NOT NULL REFERENCES joueurs(id),
+    debut       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    fin         TIMESTAMPTZ NOT NULL,
+    reclamee    BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS materiaux_joueur (
+    joueur_id       INTEGER NOT NULL REFERENCES joueurs(id),
+    materiau_code   VARCHAR(30) NOT NULL,
+    quantite        INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (joueur_id, materiau_code)
 );
 
 CREATE TABLE IF NOT EXISTS badges (
@@ -106,6 +125,11 @@ def init_db():
             cur.execute("ALTER TABLE tickets_traites ADD COLUMN IF NOT EXISTS nom_categorie      VARCHAR(100)")
             # Migrations idempotentes — Badges
             cur.execute("ALTER TABLE combats ADD COLUMN IF NOT EXISTS vainqueur_id INTEGER REFERENCES joueurs(id)")
+            cur.execute("ALTER TABLE equipements ADD COLUMN IF NOT EXISTS amelioration INTEGER NOT NULL DEFAULT 0")
+            cur.execute("ALTER TABLE equipements ADD COLUMN IF NOT EXISTS passif_code  VARCHAR(30)")
+            cur.execute("ALTER TABLE equipements ADD COLUMN IF NOT EXISTS cout_base    INTEGER NOT NULL DEFAULT 0")
+            cur.execute("ALTER TABLE equipements ADD COLUMN IF NOT EXISTS tier         INTEGER NOT NULL DEFAULT 1")
+            cur.execute("ALTER TABLE expeditions ADD COLUMN IF NOT EXISTS reclamee BOOLEAN NOT NULL DEFAULT FALSE")
         conn.commit()
         _seed_badges(conn)
     print("Base de données initialisée.")
@@ -249,6 +273,83 @@ def get_badges_joueur(conn, joueur_id: int) -> list:
             ORDER BY jb.date_obtenu ASC NULLS LAST, b.code
         """, (joueur_id,))
         return [dict(r) for r in cur.fetchall()]
+
+
+# ---------------------------------------------------------------------------
+# Tickets traités
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Expéditions
+# ---------------------------------------------------------------------------
+
+def get_expedition_active(conn, joueur_id: int) -> dict | None:
+    with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute("""
+            SELECT * FROM expeditions
+            WHERE joueur_id = %s AND reclamee = FALSE
+            ORDER BY id DESC LIMIT 1
+        """, (joueur_id,))
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+
+def lancer_expedition(conn, joueur_id: int, duree_heures: int) -> int:
+    with conn.cursor() as cur:
+        cur.execute("""
+            INSERT INTO expeditions (joueur_id, fin)
+            VALUES (%s, NOW() + INTERVAL '%s hours') RETURNING id
+        """, (joueur_id, duree_heures))
+        exp_id = cur.fetchone()[0]
+    conn.commit()
+    return exp_id
+
+
+def marquer_reclamee(conn, expedition_id: int):
+    with conn.cursor() as cur:
+        cur.execute("UPDATE expeditions SET reclamee = TRUE WHERE id = %s", (expedition_id,))
+    conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# Matériaux
+# ---------------------------------------------------------------------------
+
+def get_materiaux(conn, joueur_id: int) -> dict:
+    """Retourne {code: quantite} pour tous les matériaux du joueur."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT materiau_code, quantite FROM materiaux_joueur WHERE joueur_id = %s",
+            (joueur_id,)
+        )
+        return {row[0]: row[1] for row in cur.fetchall()}
+
+
+def ajouter_materiau(conn, joueur_id: int, code: str, quantite: int):
+    with conn.cursor() as cur:
+        cur.execute("""
+            INSERT INTO materiaux_joueur (joueur_id, materiau_code, quantite)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (joueur_id, materiau_code)
+            DO UPDATE SET quantite = materiaux_joueur.quantite + EXCLUDED.quantite
+        """, (joueur_id, code, quantite))
+    conn.commit()
+
+
+def consommer_materiaux(conn, joueur_id: int, materiaux: dict) -> bool:
+    """Consomme les matériaux si le joueur en a assez. Retourne True si succès."""
+    stock = get_materiaux(conn, joueur_id)
+    for code, qty in materiaux.items():
+        if stock.get(code, 0) < qty:
+            return False
+    with conn.cursor() as cur:
+        for code, qty in materiaux.items():
+            cur.execute("""
+                UPDATE materiaux_joueur SET quantite = quantite - %s
+                WHERE joueur_id = %s AND materiau_code = %s
+            """, (qty, joueur_id, code))
+    conn.commit()
+    return True
 
 
 # ---------------------------------------------------------------------------

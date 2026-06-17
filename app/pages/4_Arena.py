@@ -83,7 +83,7 @@ def vue_combat_actif(combat_id, joueur_id):
                 &#x2694; {att_for} &nbsp;|&nbsp; &#x1F6E1; {att_res} &nbsp;|&nbsp; &#x26A1; {att_agi}
             </div>
             <div style="font-size:0.75rem;color:#6ab0e8;margin-top:4px">
-                Esquive : {chance_esquive(att_agi, def_for):.0%}
+                Esquive : {chance_esquive(att_agi, def_for, att_j['level'], att_eq):.0%}
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -110,7 +110,7 @@ def vue_combat_actif(combat_id, joueur_id):
                 &#x2694; {def_for} &nbsp;|&nbsp; &#x1F6E1; {def_res} &nbsp;|&nbsp; &#x26A1; {def_agi}
             </div>
             <div style="font-size:0.75rem;color:#6ab0e8;margin-top:4px">
-                Esquive : {chance_esquive(def_agi, att_for):.0%}
+                Esquive : {chance_esquive(def_agi, att_for, def_j['level'], def_eq):.0%}
             </div>
         </div>
         """, unsafe_allow_html=True)
