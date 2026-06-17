@@ -113,9 +113,9 @@ def traiter_ticket(conn, glpi: GlpiClient, ticket: dict):
         badge_engine.verifier_badges_niveau(conn, joueur_id, nouveau_niv)
 
     print(
-        f"  Ticket #{tid} [{nom_categorie or '?'}] → {username}"
-        f" +{xp_resolution} XP (diff {score_diff}/10, rapidité)"
-        f" | Conformité {score_conf}/10 → {createur_nom or username} +{xp_conf} XP"
+        f"  Ticket #{tid} [{nom_categorie or '?'}] -> {username}"
+        f" +{xp_resolution} XP (diff {score_diff}/10)"
+        f" | Conformite {score_conf}/10 -> {createur_nom or username} +{xp_conf} XP"
         f"{' | NIVEAU ' + str(nouveau_niv) + ' !' if niveaux else ''}"
     )
 
