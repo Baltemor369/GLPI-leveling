@@ -16,8 +16,13 @@ def get_conn():
 # ---------------------------------------------------------------------------
 
 SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS schema_version (
+    version     INTEGER PRIMARY KEY,
+    applied_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS joueurs (
-    id                  INTEGER PRIMARY KEY,  -- ID utilisateur GLPI
+    id                  INTEGER PRIMARY KEY,
     username            VARCHAR(100) NOT NULL,
     level               INTEGER NOT NULL DEFAULT 1,
     xp                  INTEGER NOT NULL DEFAULT 0,
@@ -26,7 +31,8 @@ CREATE TABLE IF NOT EXISTS joueurs (
     constitution_pv     INTEGER NOT NULL DEFAULT 10,
     agilite_vit         INTEGER NOT NULL DEFAULT 10,
     esprit_res          INTEGER NOT NULL DEFAULT 10,
-    points_a_attribuer  INTEGER NOT NULL DEFAULT 0
+    points_a_attribuer  INTEGER NOT NULL DEFAULT 0,
+    pity_expedition     INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS equipements (
@@ -104,35 +110,72 @@ CREATE TABLE IF NOT EXISTS combats (
     pv_attaquant    INTEGER NOT NULL DEFAULT 0,
     pv_defenseur    INTEGER NOT NULL DEFAULT 0,
     mise            INTEGER NOT NULL DEFAULT 0,
-    log_combat      TEXT NOT NULL DEFAULT ''
+    log_combat      TEXT NOT NULL DEFAULT '',
+    vainqueur_id    INTEGER REFERENCES joueurs(id)
 );
 """
+
+# ---------------------------------------------------------------------------
+# Migrations numérotées — chaque entrée ne s'exécute qu'une seule fois.
+# Pour ajouter une évolution de schéma : append une nouvelle entrée.
+# Ne jamais modifier une migration existante.
+# ---------------------------------------------------------------------------
+MIGRATIONS = [
+    # 1 — colonnes ajoutées après la création initiale de combats
+    """
+    ALTER TABLE combats ADD COLUMN IF NOT EXISTS pv_attaquant INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE combats ADD COLUMN IF NOT EXISTS pv_defenseur INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE combats ADD COLUMN IF NOT EXISTS mise         INTEGER NOT NULL DEFAULT 0;
+    """,
+    # 2 — colonnes ajoutées à tickets_traites (conformité, LLM, catégorie)
+    """
+    ALTER TABLE tickets_traites ADD COLUMN IF NOT EXISTS score_difficulte   INTEGER NOT NULL DEFAULT 5;
+    ALTER TABLE tickets_traites ADD COLUMN IF NOT EXISTS createur_id        INTEGER REFERENCES joueurs(id);
+    ALTER TABLE tickets_traites ADD COLUMN IF NOT EXISTS xp_conformite      INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE tickets_traites ADD COLUMN IF NOT EXISTS score_conformite   INTEGER NOT NULL DEFAULT 5;
+    ALTER TABLE tickets_traites ADD COLUMN IF NOT EXISTS analyse_conformite TEXT;
+    ALTER TABLE tickets_traites ADD COLUMN IF NOT EXISTS nom_categorie      VARCHAR(100);
+    """,
+    # 3 — vainqueur_id sur combats + colonnes forge sur équipements + reclamee expéditions
+    """
+    ALTER TABLE combats      ADD COLUMN IF NOT EXISTS vainqueur_id  INTEGER REFERENCES joueurs(id);
+    ALTER TABLE equipements  ADD COLUMN IF NOT EXISTS amelioration  INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE equipements  ADD COLUMN IF NOT EXISTS passif_code   VARCHAR(30);
+    ALTER TABLE equipements  ADD COLUMN IF NOT EXISTS cout_base     INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE equipements  ADD COLUMN IF NOT EXISTS tier          INTEGER NOT NULL DEFAULT 1;
+    ALTER TABLE expeditions  ADD COLUMN IF NOT EXISTS reclamee      BOOLEAN NOT NULL DEFAULT FALSE;
+    """,
+    # 4 — pity expéditions
+    """
+    ALTER TABLE joueurs ADD COLUMN IF NOT EXISTS pity_expedition INTEGER NOT NULL DEFAULT 0;
+    """,
+]
+
+
+def _current_version(cur) -> int:
+    cur.execute("SELECT COALESCE(MAX(version), 0) FROM schema_version")
+    return cur.fetchone()[0]
+
 
 def init_db():
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(SCHEMA_SQL)
-            # Migrations idempotentes
-            cur.execute("ALTER TABLE combats ADD COLUMN IF NOT EXISTS pv_attaquant INTEGER NOT NULL DEFAULT 0")
-            cur.execute("ALTER TABLE combats ADD COLUMN IF NOT EXISTS pv_defenseur INTEGER NOT NULL DEFAULT 0")
-            cur.execute("ALTER TABLE combats ADD COLUMN IF NOT EXISTS mise INTEGER NOT NULL DEFAULT 0")
-            # Migrations idempotentes — Annexes A & B
-            cur.execute("ALTER TABLE tickets_traites ADD COLUMN IF NOT EXISTS score_difficulte   INTEGER NOT NULL DEFAULT 5")
-            cur.execute("ALTER TABLE tickets_traites ADD COLUMN IF NOT EXISTS createur_id        INTEGER REFERENCES joueurs(id)")
-            cur.execute("ALTER TABLE tickets_traites ADD COLUMN IF NOT EXISTS xp_conformite      INTEGER NOT NULL DEFAULT 0")
-            cur.execute("ALTER TABLE tickets_traites ADD COLUMN IF NOT EXISTS score_conformite   INTEGER NOT NULL DEFAULT 5")
-            cur.execute("ALTER TABLE tickets_traites ADD COLUMN IF NOT EXISTS analyse_conformite TEXT")
-            cur.execute("ALTER TABLE tickets_traites ADD COLUMN IF NOT EXISTS nom_categorie      VARCHAR(100)")
-            # Migrations idempotentes — Badges
-            cur.execute("ALTER TABLE combats ADD COLUMN IF NOT EXISTS vainqueur_id INTEGER REFERENCES joueurs(id)")
-            cur.execute("ALTER TABLE equipements ADD COLUMN IF NOT EXISTS amelioration INTEGER NOT NULL DEFAULT 0")
-            cur.execute("ALTER TABLE equipements ADD COLUMN IF NOT EXISTS passif_code  VARCHAR(30)")
-            cur.execute("ALTER TABLE equipements ADD COLUMN IF NOT EXISTS cout_base    INTEGER NOT NULL DEFAULT 0")
-            cur.execute("ALTER TABLE equipements ADD COLUMN IF NOT EXISTS tier         INTEGER NOT NULL DEFAULT 1")
-            cur.execute("ALTER TABLE expeditions ADD COLUMN IF NOT EXISTS reclamee BOOLEAN NOT NULL DEFAULT FALSE")
-        conn.commit()
+            conn.commit()
+            version = _current_version(cur)
+            pending = MIGRATIONS[version:]
+            for i, sql in enumerate(pending, start=version + 1):
+                for statement in sql.strip().split(";"):
+                    statement = statement.strip()
+                    if statement:
+                        cur.execute(statement)
+                cur.execute(
+                    "INSERT INTO schema_version (version) VALUES (%s)", (i,)
+                )
+                print(f"Migration {i} appliquée.")
+            conn.commit()
         _seed_badges(conn)
-    print("Base de données initialisée.")
+    print(f"Base de données prête (version {version + len(pending)}).")
 
 
 # ---------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Page Expédition — 2h en temps réel, loot aléatoire."""
+"""Page Expédition — 2h en temps réel, loot pondéré 3 rolls + pity."""
 
 import sys, os, random
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../sync"))
@@ -18,27 +18,57 @@ joueur_id = require_login()
 render_sidebar()
 
 DUREE_HEURES = 2
+NB_ROLLS     = 3
+PITY_SEUIL   = 10
 
 LOOT_TABLE = [
-    {"code": "or",              "nom": "Or",              "icone": "🪙", "min": 5,  "max": 15, "chance": 0.70},
-    {"code": "bois_chene",      "nom": "Bois de Chêne",   "icone": "🪵", "min": 2,  "max": 4,  "chance": 0.55},
-    {"code": "minerai_fer",     "nom": "Minerai de Fer",  "icone": "⚙️", "min": 1,  "max": 3,  "chance": 0.40},
-    {"code": "cristal_runique", "nom": "Cristal Runique", "icone": "💎", "min": 1,  "max": 2,  "chance": 0.20},
-    {"code": "essence_neant",   "nom": "Essence du Néant","icone": "✨", "min": 1,  "max": 1,  "chance": 0.08},
+    {"code": "or",              "nom": "Or",               "icone": "🪙", "poids": 38, "min": 5,  "max": 15},
+    {"code": "bois_chene",      "nom": "Bois de Chêne",    "icone": "🪵", "poids": 28, "min": 2,  "max": 4},
+    {"code": "minerai_fer",     "nom": "Minerai de Fer",   "icone": "⚙️", "poids": 20, "min": 1,  "max": 3},
+    {"code": "cristal_runique", "nom": "Cristal Runique",  "icone": "💎", "poids": 10, "min": 1,  "max": 2},
+    {"code": "essence_neant",   "nom": "Essence du Néant", "icone": "✨", "poids": 4,  "min": 1,  "max": 1},
 ]
+_POIDS = [item["poids"] for item in LOOT_TABLE]
+_ESSENCE = next(i for i in LOOT_TABLE if i["code"] == "essence_neant")
 
-MATERIAU_INFO = {l["code"]: l for l in LOOT_TABLE}
 
+def rouler_loot(pity: int) -> tuple[list[dict], bool]:
+    """3 rolls pondérés. Si pity >= PITY_SEUIL, force Essence sur 1 roll."""
+    butin_dict = {}
+    essence_obtenue = False
+    rolls_restants = NB_ROLLS
 
-def rouler_loot() -> list[dict]:
-    """Tire le loot aléatoirement selon les chances de la table."""
+    if pity >= PITY_SEUIL:
+        qty = random.randint(_ESSENCE["min"], _ESSENCE["max"])
+        butin_dict["essence_neant"] = qty
+        essence_obtenue = True
+        rolls_restants -= 1
+
+    for _ in range(rolls_restants):
+        item = random.choices(LOOT_TABLE, weights=_POIDS, k=1)[0]
+        qty  = random.randint(item["min"], item["max"])
+        butin_dict[item["code"]] = butin_dict.get(item["code"], 0) + qty
+        if item["code"] == "essence_neant":
+            essence_obtenue = True
+
     butin = []
-    for item in LOOT_TABLE:
-        if random.random() < item["chance"]:
-            qty = random.randint(item["min"], item["max"])
-            butin.append({"code": item["code"], "nom": item["nom"],
-                          "icone": item["icone"], "quantite": qty})
-    return butin
+    for code, qty in butin_dict.items():
+        info = next(i for i in LOOT_TABLE if i["code"] == code)
+        butin.append({"code": code, "nom": info["nom"], "icone": info["icone"], "quantite": qty})
+    return butin, essence_obtenue
+
+
+def get_pity(conn, jid: int) -> int:
+    with conn.cursor() as cur:
+        cur.execute("SELECT pity_expedition FROM joueurs WHERE id = %s", (jid,))
+        row = cur.fetchone()
+        return row[0] if row else 0
+
+
+def set_pity(conn, jid: int, pity: int):
+    with conn.cursor() as cur:
+        cur.execute("UPDATE joueurs SET pity_expedition = %s WHERE id = %s", (pity, jid))
+    conn.commit()
 
 
 def afficher_materiaux(stock: dict):
@@ -63,38 +93,54 @@ st.markdown("---")
 # ── Inventaire matériaux ──────────────────────────────────────────────────────
 conn  = get_conn()
 stock = get_materiaux(conn, joueur_id)
+pity_actuel = get_pity(conn, joueur_id)
 conn.close()
 
 st.markdown("### 🎒 Vos matériaux")
 afficher_materiaux(stock)
+
+if pity_actuel > 0:
+    pity_label = f"🔮 Pity Essence : **{pity_actuel}/{PITY_SEUIL}** expéditions sans Essence du Néant"
+    if pity_actuel >= PITY_SEUIL:
+        st.warning(f"{pity_label} — **Garantie active : prochaine expédition drop Essence !**")
+    else:
+        st.info(pity_label)
+
 st.markdown("---")
 
 # ── Table de loot ─────────────────────────────────────────────────────────────
-with st.expander("📋 Table de loot (ce que vous pouvez trouver)"):
+total_poids = sum(_POIDS)
+with st.expander("📋 Table de loot — probabilités par roll"):
     cols = st.columns(5)
     for col, item in zip(cols, LOOT_TABLE):
         with col:
+            pct = item["poids"] / total_poids * 100
             st.markdown(f"""
             <div class="stat-card" style="text-align:center">
                 <div style="font-size:1.4rem">{item['icone']}</div>
                 <div style="color:var(--parchemin);font-size:0.8rem;margin:4px 0">{item['nom']}</div>
                 <div style="color:var(--gris);font-size:0.75rem">{item['min']}–{item['max']} unités</div>
-                <div style="color:var(--or);font-size:0.85rem">{int(item['chance']*100)}% de chance</div>
+                <div style="color:var(--or);font-size:0.85rem">{pct:.0f}% / roll</div>
             </div>
             """, unsafe_allow_html=True)
+    st.caption(f"3 rolls par expédition • Pity Essence garantie à {PITY_SEUIL} expéditions sans en obtenir")
 
 st.markdown("---")
 
 # ── Résultat d'une réclamation (stocké en session) ───────────────────────────
 if "butin_reclame" in st.session_state:
     butin = st.session_state.pop("butin_reclame")
+    pity_info = st.session_state.pop("pity_info", None)
     st.success("🎉 Expédition terminée ! Voici votre butin :")
+    if pity_info == "garanti":
+        st.info("✨ Pity activé — Essence du Néant garantie !")
     if butin:
         cols = st.columns(len(butin))
         for col, item in zip(cols, butin):
             with col:
+                border = "1px solid #c9a84c" if item["code"] == "essence_neant" else "1px solid var(--or)"
                 st.markdown(f"""
-                <div class="stat-card" style="text-align:center;border:1px solid var(--or)">
+                <div class="stat-card" style="text-align:center;border:{border}">
                     <div style="font-size:2rem">{item['icone']}</div>
                     <div style="color:var(--parchemin)">{item['nom']}</div>
                     <div style="color:var(--or);font-size:1.2rem"><strong>+{item['quantite']}</strong></div>
@@ -129,12 +175,14 @@ def bloc_expedition():
         fin = fin.replace(tzinfo=timezone.utc)
 
     if now >= fin:
-        # Expédition terminée — bouton réclamer
         st.markdown("### ✅ Expédition terminée !")
         st.markdown("Votre équipe est de retour. Réclamez votre butin !")
         if st.button("🎁 Réclamer les récompenses", use_container_width=True):
-            butin = rouler_loot()
             conn = get_conn()
+            pity = get_pity(conn, joueur_id)
+            butin, essence_obtenue = rouler_loot(pity)
+            pity_info = "garanti" if pity >= PITY_SEUIL else None
+
             marquer_reclamee(conn, expedition["id"])
             for item in butin:
                 if item["code"] == "or":
@@ -146,11 +194,16 @@ def bloc_expedition():
                     conn.commit()
                 else:
                     ajouter_materiau(conn, joueur_id, item["code"], item["quantite"])
+
+            nouveau_pity = 0 if essence_obtenue else pity + 1
+            set_pity(conn, joueur_id, nouveau_pity)
             conn.close()
+
             st.session_state["butin_reclame"] = butin
+            if pity_info:
+                st.session_state["pity_info"] = pity_info
             st.rerun(scope="app")
     else:
-        # En cours — afficher countdown
         reste = fin - now
         heures   = int(reste.total_seconds() // 3600)
         minutes  = int((reste.total_seconds() % 3600) // 60)
