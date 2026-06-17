@@ -1,0 +1,8 @@
+.venv/
+.git/
+__pycache__/
+*.pyc
+*.pyo
+.env
+sync/test_*.py
+*.ps1

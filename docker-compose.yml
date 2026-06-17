@@ -1,16 +1,60 @@
 services:
-  postgres:
+
+  # ── Base de données ──────────────────────────────────────────────────────────
+  db:
     image: postgres:16-alpine
-    container_name: glpileveling-db
-    restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB:       glpileveling
+      POSTGRES_USER:     glpi
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U glpi -d glpileveling"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── LLM local ───────────────────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # ── Interface web (Streamlit) ────────────────────────────────────────────────
+  app:
+    build: .
+    command: streamlit run app/Aventurier.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
+    ports:
+      - "${APP_PORT:-8501}:8501"
+    depends_on:
+      db:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    env_file: .env
+    restart: unless-stopped
+
+  # ── Worker de synchronisation GLPI ──────────────────────────────────────────
+  worker:
+    build: .
+    command: python sync/worker.py
+    depends_on:
+      db:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    env_file: .env
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+  ollama_data:
