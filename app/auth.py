@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Authentification GLPI OAuth2 pour GlpiLeveling — sessions via cookie HttpOnly."""
+"""Authentification GLPI OAuth2 pour GlpiLeveling — sessions par token URL."""
 
 import base64
 import json
@@ -11,7 +11,6 @@ from datetime import datetime, timedelta
 import psycopg2.extras
 import requests
 import streamlit as st
-from streamlit_cookies_controller import CookieController
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../sync"))
 from config import GLPI_API_BASE_URL, GLPI_OAUTH_CLIENT_ID, GLPI_OAUTH_CLIENT_SECRET
@@ -21,13 +20,6 @@ import db_queries as db
 TOKEN_URL = f"{GLPI_API_BASE_URL}/token"
 
 SESSION_MINUTES = 15
-COOKIE_NAME     = "glpileveling_session"
-COOKIE_MAX_AGE  = 86400  # 24h dans le navigateur ; expiry réelle contrôlée par la DB
-
-
-def _ctrl() -> CookieController:
-    """Instancie le controller cookie (à appeler durant l'exécution du script Streamlit)."""
-    return CookieController()
 
 
 # ── Gestion des tokens (persistés en BDD) ───────────────────────────────────
@@ -65,36 +57,36 @@ def _lookup_token(token: str) -> dict | None:
     return dict(sess) if sess else None
 
 
-def _save_session(joueur_id: int, username: str, ctrl: CookieController):
+def _save_session(joueur_id: int, username: str):
     token = _create_token(joueur_id, username)
     st.session_state["joueur_id"] = joueur_id
     st.session_state["username"]  = username
-    ctrl.set(COOKIE_NAME, token, max_age=COOKIE_MAX_AGE)
+    st.query_params["token"]      = token
 
 
-def _restore_from_cookie(ctrl: CookieController) -> bool:
-    token = ctrl.get(COOKIE_NAME)
+def _restore_from_token() -> bool:
+    token = st.query_params.get("token")
     if not token:
         return False
     sess = _lookup_token(token)
     if not sess:
-        ctrl.remove(COOKIE_NAME)
+        st.query_params.clear()
         return False
     st.session_state["joueur_id"] = sess["joueur_id"]
     st.session_state["username"]  = sess["username"]
     return True
 
 
-def _clear_session(ctrl: CookieController):
-    token = ctrl.get(COOKIE_NAME)
+def _clear_session():
+    token = st.query_params.get("token")
     if token:
         conn = get_conn()
         with conn.cursor() as cur:
             cur.execute("DELETE FROM sessions WHERE token = %s", (token,))
         conn.commit()
         conn.close()
-    ctrl.remove(COOKIE_NAME)
-    st.session_state.clear()  # efface aussi _cookie_ready → prochain render re-attend le composant
+    st.query_params.clear()
+    st.session_state.clear()
 
 
 # ── JWT ─────────────────────────────────────────────────────────────────────
@@ -163,7 +155,7 @@ section[data-testid="stSidebar"]          { display: none !important; }
 """
 
 
-def _show_login_form(ctrl: CookieController):
+def _show_login_form():
     st.markdown(_CSS_HIDE_SIDEBAR, unsafe_allow_html=True)
     st.markdown("""
     <div style="text-align:center;margin:60px 0 30px">
@@ -204,7 +196,7 @@ def _show_login_form(ctrl: CookieController):
                     "Ton profil sera créé dès ton premier ticket pris en charge."
                 )
             else:
-                _save_session(result["glpi_id"], result["username"], ctrl)
+                _save_session(result["glpi_id"], result["username"])
                 st.rerun()
 
 
@@ -218,29 +210,17 @@ def require_login(main_page: bool = False) -> int:
     """
     Vérifie l'authentification.
     - session_state présent → OK directement
-    - sinon → attend un cycle que le composant cookie charge depuis le navigateur
-    - sinon → restaure la session depuis le cookie + DB
+    - sinon → lit le token dans l'URL et restaure la session depuis la DB
     - sinon → formulaire de login (main) ou redirect (sous-pages)
     """
     if "joueur_id" in st.session_state:
         return st.session_state["joueur_id"]
 
-    ctrl = _ctrl()
-
-    # streamlit-cookies-controller a besoin d'un cycle de rendu pour que le JS
-    # envoie les cookies du navigateur vers Python. Sans cette attente, ctrl.get()
-    # retourne toujours None au premier render après un refresh.
-    if "_cookie_ready" not in st.session_state:
-        st.session_state["_cookie_ready"] = True
-        if main_page:
-            st.markdown(_CSS_HIDE_SIDEBAR, unsafe_allow_html=True)
-        st.stop()  # Le composant déclenchera un rerun automatique
-
-    if _restore_from_cookie(ctrl):
+    if _restore_from_token():
         return st.session_state["joueur_id"]
 
     if main_page:
-        _show_login_form(ctrl)
+        _show_login_form()
         st.stop()
     else:
         st.markdown(_CSS_HIDE_SIDEBAR, unsafe_allow_html=True)
@@ -249,8 +229,6 @@ def require_login(main_page: bool = False) -> int:
 
 def render_sidebar():
     """Sidebar : identité du joueur connecté + bouton déconnexion."""
-    ctrl = _ctrl()
-
     with st.sidebar:
         st.markdown(
             "<h2 style='text-align:center;font-size:1.3rem'>&#x2694; GLPILEVELING</h2>",
@@ -274,5 +252,5 @@ def render_sidebar():
         st.markdown("<div class='ornement'>— ✦ —</div>", unsafe_allow_html=True)
 
         if st.button("D&#xe9;connexion", use_container_width=True, key="logout_btn"):
-            _clear_session(ctrl)
+            _clear_session()
             st.rerun()
