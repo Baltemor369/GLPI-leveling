@@ -1,5 +1,6 @@
 """Page Journal — historique de tous les tickets traités."""
 
+import html
 import streamlit as st
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../app"))
@@ -50,13 +51,15 @@ st.markdown("---")
 for t in tickets:
     badge = '<span class="badge-conforme">✓ CONFORME</span>' if t["conforme"] else '<span class="badge-nonconforme">✗ NON CONFORME</span>'
     date_str = t["date_traitement"].strftime("%d/%m/%Y %H:%M") if t["date_traitement"] else "—"
+    username = html.escape(t["username"] or "")
+    analyse  = html.escape(t["analyse_llm"] or "")
     st.markdown(f"""
     <div class="ticket-row">
         <strong>Ticket #{t['ticket_id']}</strong> &nbsp;·&nbsp;
-        <span style="color:#c9a84c">{t['username']}</span> &nbsp;·&nbsp;
+        <span style="color:#c9a84c">{username}</span> &nbsp;·&nbsp;
         {badge} &nbsp;·&nbsp;
         <span style="color:#c9a84c">+{t['xp_gagne']} XP</span>
         <span style="float:right;color:#6b5a4e;font-size:0.8rem">{date_str}</span>
-        <br><small style="color:#6b5a4e">{t['analyse_llm']}</small>
+        <br><small style="color:#6b5a4e">{analyse}</small>
     </div>
     """, unsafe_allow_html=True)

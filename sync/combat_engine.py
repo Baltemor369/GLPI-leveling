@@ -97,10 +97,17 @@ def creer_combat(conn, attaquant_id: int, defenseur_id: int, mise: int = 0) -> i
     return combat_id
 
 
-def accepter_combat(conn, combat_id: int):
+def accepter_combat(conn, combat_id: int, joueur_id: int) -> str | None:
+    """Accepte le combat. Retourne None si OK, message d'erreur sinon."""
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-        cur.execute("SELECT * FROM combats WHERE id = %s", (combat_id,))
-        combat = dict(cur.fetchone())
+        cur.execute(
+            "SELECT * FROM combats WHERE id = %s AND defenseur_id = %s AND statut = 'en_attente'",
+            (combat_id, joueur_id),
+        )
+        combat_row = cur.fetchone()
+        if not combat_row:
+            return "Accès non autorisé ou combat introuvable."
+        combat = dict(combat_row)
 
         att  = _get_joueur(cur, combat["attaquant_id"])
         dfn  = _get_joueur(cur, combat["defenseur_id"])
@@ -115,8 +122,22 @@ def accepter_combat(conn, combat_id: int):
 
         mise = combat["mise"]
         if mise > 0:
-            cur.execute("UPDATE joueurs SET or_monnaie = or_monnaie - %s WHERE id = %s", (mise, att["id"]))
-            cur.execute("UPDATE joueurs SET or_monnaie = or_monnaie - %s WHERE id = %s", (mise, dfn["id"]))
+            cur.execute(
+                "UPDATE joueurs SET or_monnaie = or_monnaie - %s "
+                "WHERE id = %s AND or_monnaie >= %s RETURNING id",
+                (mise, att["id"], mise),
+            )
+            if cur.fetchone() is None:
+                conn.rollback()
+                return "L'attaquant n'a plus assez d'or pour la mise."
+            cur.execute(
+                "UPDATE joueurs SET or_monnaie = or_monnaie - %s "
+                "WHERE id = %s AND or_monnaie >= %s RETURNING id",
+                (mise, dfn["id"], mise),
+            )
+            if cur.fetchone() is None:
+                conn.rollback()
+                return "Tu n'as plus assez d'or pour cette mise."
 
         mise_info = f" | Mise : {mise} or chacun (pot : {mise * 2} or)" if mise > 0 else ""
         log = (f"Combat commencé ! Initiative : "
@@ -130,6 +151,7 @@ def accepter_combat(conn, combat_id: int):
             WHERE id=%s
         """, (premier, pv_a, pv_d, log, combat_id))
     conn.commit()
+    return None
 
 
 # ── Tour de jeu ───────────────────────────────────────────────────────────────

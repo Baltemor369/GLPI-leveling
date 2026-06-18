@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Page principale : Profil de l'aventurier."""
 
+import html
 import streamlit as st
 import sys, os, threading
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../sync"))
@@ -134,13 +135,14 @@ if not tickets:
     st.markdown("<p style='color:var(--gris);font-style:italic'>Aucun ticket traité pour l'instant.</p>", unsafe_allow_html=True)
 else:
     for t in tickets:
-        badge = '<span class="badge-conforme">CONFORME</span>' if t["conforme"] else '<span class="badge-nonconforme">NON CONFORME</span>'
+        badge   = '<span class="badge-conforme">CONFORME</span>' if t["conforme"] else '<span class="badge-nonconforme">NON CONFORME</span>'
+        analyse = html.escape(t["analyse_llm"] or "")
         st.markdown(f"""
         <div class="ticket-row">
             <strong style="color:var(--or-clair)">Ticket #{t['ticket_id']}</strong>
             &nbsp; {badge} &nbsp;
             <span style="color:var(--or)">+{t['xp_gagne']} XP</span>
-            <br><small style="color:var(--gris)">{t['analyse_llm']}</small>
+            <br><small style="color:var(--gris)">{analyse}</small>
         </div>
         """, unsafe_allow_html=True)
 

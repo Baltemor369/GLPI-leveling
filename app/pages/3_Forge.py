@@ -112,9 +112,15 @@ for type_key, type_label in TYPE_LABELS.items():
                 conn = get_conn()
                 with conn.cursor() as cur:
                     cur.execute(
-                        "UPDATE joueurs SET or_monnaie = or_monnaie - %s WHERE id = %s",
-                        (item["cout"], joueur_id),
+                        "UPDATE joueurs SET or_monnaie = or_monnaie - %s "
+                        "WHERE id = %s AND or_monnaie >= %s RETURNING id",
+                        (item["cout"], joueur_id, item["cout"]),
                     )
+                    if cur.fetchone() is None:
+                        conn.rollback()
+                        conn.close()
+                        st.error("Or insuffisant.")
+                        st.stop()
                     cur.execute("""
                         INSERT INTO equipements
                             (joueur_id, nom, type, bonus_stat, valeur_bonus,
@@ -189,9 +195,15 @@ else:
                             (item["id"],),
                         )
                         cur.execute(
-                            "UPDATE joueurs SET or_monnaie = or_monnaie - %s WHERE id = %s",
-                            (cout_upgrade, joueur_id),
+                            "UPDATE joueurs SET or_monnaie = or_monnaie - %s "
+                            "WHERE id = %s AND or_monnaie >= %s RETURNING id",
+                            (cout_upgrade, joueur_id, cout_upgrade),
                         )
+                        if cur.fetchone() is None:
+                            conn.rollback()
+                            conn.close()
+                            st.error("Or insuffisant.")
+                            st.stop()
                     conn.commit()
                     if a_du_bois:
                         consommer_materiaux(conn, joueur_id, {"bois_chene": 1})

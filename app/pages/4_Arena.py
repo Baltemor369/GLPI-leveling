@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Page Arène — Combats PvP au tour par tour."""
 
+import html
 import sys, os, time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../sync"))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../app"))
@@ -69,7 +70,7 @@ def vue_combat_actif(combat_id, joueur_id):
         st.markdown(f"""
         <div class="stat-card">
             <div class="stat-label">ATTAQUANT</div>
-            <div class="stat-value" style="font-size:1.4rem">{att_j['username']}</div>
+            <div class="stat-value" style="font-size:1.4rem">{html.escape(att_j['username'])}</div>
             <div style="color:var(--gris);font-size:0.8rem">Niv. {att_j['level']}</div>
             <div style="margin:10px 0">
                 <div style="display:flex;justify-content:space-between;font-size:0.8rem">
@@ -96,7 +97,7 @@ def vue_combat_actif(combat_id, joueur_id):
         st.markdown(f"""
         <div class="stat-card">
             <div class="stat-label">DÉFENSEUR</div>
-            <div class="stat-value" style="font-size:1.4rem">{def_j['username']}</div>
+            <div class="stat-value" style="font-size:1.4rem">{html.escape(def_j['username'])}</div>
             <div style="color:var(--gris);font-size:0.8rem">Niv. {def_j['level']}</div>
             <div style="margin:10px 0">
                 <div style="display:flex;justify-content:space-between;font-size:0.8rem">
@@ -148,7 +149,7 @@ def vue_combat_actif(combat_id, joueur_id):
     lignes = c["log_combat"].strip().split("\n") if c["log_combat"] else []
     for ligne in reversed(lignes[-15:]):
         if ligne.strip():
-            st.markdown(f"<div class='ticket-row'>{ligne}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='ticket-row'>{html.escape(ligne)}</div>", unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -174,13 +175,19 @@ def vue_defi_attente(combat_id, joueur_id):
         col1, col2 = st.columns(2)
         with col1:
             if st.button("Accepter le combat", use_container_width=True):
-                accepter_combat(conn, c["id"])
+                err = accepter_combat(conn, c["id"], joueur_id)
                 conn.close()
-                st.rerun(scope="app")
+                if err:
+                    st.error(err)
+                else:
+                    st.rerun(scope="app")
         with col2:
             if st.button("Refuser", use_container_width=True):
                 with conn.cursor() as cur:
-                    cur.execute("DELETE FROM combats WHERE id = %s", (c["id"],))
+                    cur.execute(
+                        "DELETE FROM combats WHERE id = %s AND defenseur_id = %s",
+                        (c["id"], joueur_id),
+                    )
                 conn.commit()
                 conn.close()
                 st.rerun(scope="app")
@@ -231,8 +238,8 @@ else:
         st.markdown("### &#x1F4DC; Dernier combat")
         st.markdown(f"""
         <div class="ticket-row">
-            <strong>{dernier['nom_attaquant']}</strong> vs <strong>{dernier['nom_defenseur']}</strong>
-            <br><small style="color:var(--gris);white-space:pre-line">{dernier['log_combat'][-300:]}</small>
+            <strong>{html.escape(dernier['nom_attaquant'])}</strong> vs <strong>{html.escape(dernier['nom_defenseur'])}</strong>
+            <br><small style="color:var(--gris);white-space:pre-line">{html.escape(dernier['log_combat'][-300:])}</small>
         </div>
         """, unsafe_allow_html=True)
         st.markdown("---")
