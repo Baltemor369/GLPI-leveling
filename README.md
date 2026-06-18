@@ -128,6 +128,24 @@ docker compose down
 docker compose down -v
 ```
 
+### Mise à jour & patches
+
+Après chaque mise à jour du code source :
+
+```bash
+git pull
+docker compose up -d --build app worker
+```
+
+Le `--build` reconstruit uniquement l'image applicative. La base de données et Ollama ne sont **pas** touchés — leurs données sont dans des volumes persistants.
+
+| Changement | Commande |
+|---|---|
+| Code Python (`app/`, `sync/`) | `git pull && docker compose up -d --build app worker` |
+| Nouveau package (`requirements.txt`) | `git pull && docker compose up -d --build app worker` |
+| Variables d'environnement (`.env`) | `docker compose restart app worker` |
+| `docker-compose.yml` uniquement | `docker compose up -d` |
+
 ---
 
 ## Configuration GLPI
