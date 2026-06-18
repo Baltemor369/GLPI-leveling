@@ -94,8 +94,7 @@ def _clear_session(ctrl: CookieController):
         conn.commit()
         conn.close()
     ctrl.remove(COOKIE_NAME)
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
+    st.session_state.clear()  # efface aussi _cookie_ready → prochain render re-attend le composant
 
 
 # ── JWT ─────────────────────────────────────────────────────────────────────
@@ -219,13 +218,23 @@ def require_login(main_page: bool = False) -> int:
     """
     Vérifie l'authentification.
     - session_state présent → OK directement
-    - sinon → lit le cookie de session et restaure depuis la DB
+    - sinon → attend un cycle que le composant cookie charge depuis le navigateur
+    - sinon → restaure la session depuis le cookie + DB
     - sinon → formulaire de login (main) ou redirect (sous-pages)
     """
     if "joueur_id" in st.session_state:
         return st.session_state["joueur_id"]
 
     ctrl = _ctrl()
+
+    # streamlit-cookies-controller a besoin d'un cycle de rendu pour que le JS
+    # envoie les cookies du navigateur vers Python. Sans cette attente, ctrl.get()
+    # retourne toujours None au premier render après un refresh.
+    if "_cookie_ready" not in st.session_state:
+        st.session_state["_cookie_ready"] = True
+        if main_page:
+            st.markdown(_CSS_HIDE_SIDEBAR, unsafe_allow_html=True)
+        st.stop()  # Le composant déclenchera un rerun automatique
 
     if _restore_from_cookie(ctrl):
         return st.session_state["joueur_id"]
