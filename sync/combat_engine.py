@@ -216,7 +216,7 @@ def jouer_action(conn, combat_id: int, joueur_id: int, action_id: str) -> dict:
                     if _passif(eq_att, "arme") == "vampirisme" and degats > 0:
                         soin_vamp = max(1, round(degats * 0.25))
                         pv_att_now = min(pv_max(attaqueur, eq_att), pv_att_now + soin_vamp)
-                        log_ligne += f" [🩸+{soin_vamp} PV]"
+                        log_ligne += f" [💉+{soin_vamp} PV]"
 
                     # ── Épines (Armure Runique T4) ────────────────────────────
                     if _passif(eq_def, "armure") == "epines" and degats > 0:

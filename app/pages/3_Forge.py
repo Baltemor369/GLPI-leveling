@@ -32,8 +32,8 @@ stock_mat = get_materiaux(conn_mat, joueur_id)
 conn_mat.close()
 
 c1, c2, c3, c4, c5 = st.columns(5)
-c1.metric("🪙 Or", joueur["or_monnaie"])
-c2.metric("🪵 Bois de Chêne",  stock_mat.get("bois_chene",      0))
+c1.metric("💰 Or", joueur["or_monnaie"])
+c2.metric("🌲 Bois de Chêne",  stock_mat.get("bois_chene",      0))
 c3.metric("⚙️ Minerai de Fer", stock_mat.get("minerai_fer",     0))
 c4.metric("💎 Cristal Runique",stock_mat.get("cristal_runique", 0))
 c5.metric("✨ Essence du Néant",stock_mat.get("essence_neant",  0))
@@ -45,7 +45,7 @@ CATALOGUE = [
     {"nom": "Épée en Fer",        "type": "arme",   "bonus_stat": "force_p",        "valeur_bonus": 5,  "cout": 50,   "tier": 1, "passif_code": None,             "passif_desc": None},
     {"nom": "Lame d'Acier",       "type": "arme",   "bonus_stat": "force_p",        "valeur_bonus": 12, "cout": 150,  "tier": 2, "passif_code": None,             "passif_desc": None},
     {"nom": "Épée de Mithril",    "type": "arme",   "bonus_stat": "force_p",        "valeur_bonus": 22, "cout": 500,  "tier": 3, "passif_code": "saignement",     "passif_desc": "⚡ Saignement — 20% chance +3 dégâts bonus"},
-    {"nom": "Lame Runique",       "type": "arme",   "bonus_stat": "force_p",        "valeur_bonus": 35, "cout": 1000, "tier": 4, "passif_code": "vampirisme",     "passif_desc": "🩸 Vampirisme — récupère 25% des dégâts infligés"},
+    {"nom": "Lame Runique",       "type": "arme",   "bonus_stat": "force_p",        "valeur_bonus": 35, "cout": 1000, "tier": 4, "passif_code": "vampirisme",     "passif_desc": "💉 Vampirisme — récupère 25% des dégâts infligés"},
     {"nom": "Épée du Néant",      "type": "arme",   "bonus_stat": "force_p",        "valeur_bonus": 50, "cout": 5000, "tier": 5, "passif_code": "execution",      "passif_desc": "💀 Exécution — adverse < 20% PV → dégâts ×1.5"},
     # ARMURES
     {"nom": "Tunique de Cuir",    "type": "armure", "bonus_stat": "esprit_res",     "valeur_bonus": 5,  "cout": 50,   "tier": 1, "passif_code": None,             "passif_desc": None},
@@ -68,7 +68,7 @@ MATERIAUX_REQUIS = {
     5: {"essence_neant":   1},
 }
 MAT_NOMS = {
-    "bois_chene":      "🪵 Bois de Chêne",
+    "bois_chene":      "🌲 Bois de Chêne",
     "minerai_fer":     "⚙️ Minerai de Fer",
     "cristal_runique": "💎 Cristal Runique",
     "essence_neant":   "✨ Essence du Néant",
@@ -103,7 +103,7 @@ for type_key, type_label in TYPE_LABELS.items():
                 <div style="color:{tier_color};font-size:0.7rem;font-weight:bold;letter-spacing:1px">{TIER_LABELS[item['tier']]}</div>
                 <div class="stat-label" style="margin:4px 0">{item['nom']}</div>
                 <div style="color:var(--parchemin);font-size:0.9rem">+{item['valeur_bonus']} {STAT_LABELS[item['bonus_stat']]}</div>
-                <div style="color:var(--or);margin-top:6px">🪙 {item['cout']}</div>
+                <div style="color:var(--or);margin-top:6px">💰 {item['cout']}</div>
                 {mat_html}
                 {passif_html}
             </div>
@@ -179,8 +179,8 @@ else:
                 a_du_bois = stock_mat.get("bois_chene", 0) > 0
                 cout_upgrade   = round(cout_base_upgrade * 0.7) if a_du_bois else cout_base_upgrade
                 peut_ameliorer = joueur["or_monnaie"] >= cout_upgrade
-                bois_label     = " 🪵-30%" if a_du_bois else ""
-                label_btn      = f"⬆ +{amelioration + 1} (🪙{cout_upgrade}{bois_label})"
+                bois_label     = " 🌲-30%" if a_du_bois else ""
+                label_btn      = f"⬆ +{amelioration + 1} (💰{cout_upgrade}{bois_label})"
                 if st.button(label_btn, key=f"upgrade_{item['id']}", disabled=not peut_ameliorer):
                     conn = get_conn()
                     with conn.cursor() as cur:

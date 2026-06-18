@@ -22,8 +22,8 @@ NB_ROLLS     = 3
 PITY_SEUIL   = 10
 
 LOOT_TABLE = [
-    {"code": "or",              "nom": "Or",               "icone": "🪙", "poids": 38, "min": 5,  "max": 15},
-    {"code": "bois_chene",      "nom": "Bois de Chêne",    "icone": "🪵", "poids": 28, "min": 2,  "max": 4},
+    {"code": "or",              "nom": "Or",               "icone": "💰", "poids": 38, "min": 5,  "max": 15},
+    {"code": "bois_chene",      "nom": "Bois de Chêne",    "icone": "🌲", "poids": 28, "min": 2,  "max": 4},
     {"code": "minerai_fer",     "nom": "Minerai de Fer",   "icone": "⚙️", "poids": 20, "min": 1,  "max": 3},
     {"code": "cristal_runique", "nom": "Cristal Runique",  "icone": "💎", "poids": 10, "min": 1,  "max": 2},
     {"code": "essence_neant",   "nom": "Essence du Néant", "icone": "✨", "poids": 4,  "min": 1,  "max": 1},
