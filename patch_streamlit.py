@@ -11,13 +11,19 @@ index_path = os.path.join(os.path.dirname(streamlit.__file__), "static", "index.
 html = open(index_path, encoding="utf-8").read()
 
 # ── 1. CSS fond sombre permanent ──────────────────────────────────────────────
+# Couvre html/body/#root ET les conteneurs Streamlit pour ne laisser
+# aucune surface blanche apparaître pendant la transition React.
 CSS = (
     "<style>"
-    "html,body,#root{background-color:#2c1810!important;margin:0;padding:0}"
+    "html,body,#root,.stApp,[data-testid='stApp']"
+    "{background-color:#2c1810!important;margin:0;padding:0}"
     "</style>"
 )
 
 # ── 2. Overlay de navigation thématisé ───────────────────────────────────────
+# L'overlay est déclenché AU CLIC (phase capture) avant que le navigateur
+# traite la navigation — c'est la seule façon d'être plus rapide que le flash.
+# Il se retire dès que Streamlit a rendu le contenu de la nouvelle page.
 JS = """<script>
 (function () {
   var ov = null, t = null;
@@ -30,7 +36,7 @@ JS = """<script>
       "z-index:99999", "display:flex", "flex-direction:column",
       "align-items:center", "justify-content:center",
       "color:#c9a84c", "font-family:Georgia,serif",
-      "opacity:0", "transition:opacity 0.2s ease", "pointer-events:none"
+      "opacity:1", "transition:opacity 0.3s ease", "pointer-events:all"
     ].join(";");
     ov.innerHTML =
       "<div style=\\"font-size:2rem\\">&#x2694;</div>" +
@@ -43,7 +49,7 @@ JS = """<script>
     clearTimeout(t);
     ov.style.opacity = "1";
     ov.style.pointerEvents = "all";
-    t = setTimeout(hide, 6000); /* failsafe */
+    t = setTimeout(hide, 8000); /* failsafe si la page ne charge pas */
   }
 
   function hide() {
@@ -52,19 +58,22 @@ JS = """<script>
     ov.style.pointerEvents = "none";
   }
 
-  var lastPath = location.pathname;
+  /* Intercepte le clic en phase CAPTURE (avant que le navigateur traite
+     la navigation) pour afficher l'overlay AVANT tout flash blanc. */
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest("a[href]");
+    if (!a) return;
+    var href = a.getAttribute("href") || "";
+    if (href.startsWith("javascript:") || href.startsWith("#") || href.startsWith("mailto:")) return;
+    show();
+  }, true);
 
+  /* Cache l'overlay quand Streamlit a fini de rendre la nouvelle page. */
   new MutationObserver(function () {
-    /* Navigation détectée via changement d'URL */
-    if (location.pathname !== lastPath) {
-      lastPath = location.pathname;
-      show();
-    }
-    /* Page prête : stMainBlockContainer a du contenu */
     var mc = document.querySelector("[data-testid=\\"stMainBlockContainer\\"]");
     if (mc && mc.childElementCount > 0 && ov && ov.style.opacity === "1") {
       clearTimeout(t);
-      t = setTimeout(hide, 200);
+      t = setTimeout(hide, 150);
     }
   }).observe(document.body, { childList: true, subtree: true });
 })();
