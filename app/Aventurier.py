@@ -3,7 +3,7 @@
 
 import html
 import streamlit as st
-import sys, os, threading
+import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../sync"))
 
 import db_queries as db
@@ -11,15 +11,6 @@ import style
 from db import xp_requis_pour_niveau
 from auth import require_login, render_sidebar
 from version import VERSION
-
-# ── Worker en arrière-plan (démarre une seule fois par processus) ───────────
-def _start_worker():
-    if not any(t.name == "glpileveling-worker" for t in threading.enumerate()):
-        from worker import boucle_principale
-        t = threading.Thread(target=boucle_principale, name="glpileveling-worker", daemon=True)
-        t.start()
-
-_start_worker()
 
 st.set_page_config(
     page_title="GlpiLeveling",
