@@ -1,33 +1,33 @@
 # GlpiLeveling
 
-Transformez la gestion de tickets GLPI en jeu de rôle médiéval pour vos techniciens.  
-Chaque ticket résolu rapporte de l'XP, fait monter de niveau et débloque équipements, badges et combats PvP.
+Turn your GLPI helpdesk into a medieval RPG for your technicians.  
+Every closed ticket earns XP, levels up your character and unlocks equipment, badges and PvP fights.
 
 ---
 
-## Sommaire
+## Table of Contents
 
-- [Fonctionnalités](#fonctionnalités)
+- [Features](#features)
 - [Architecture](#architecture)
-- [Prérequis](#prérequis)
-- [Installation rapide (Docker)](#installation-rapide-docker)
-- [Configuration GLPI](#configuration-glpi)
-- [Développement local](#développement-local)
-- [Mécanique de jeu](#mécanique-de-jeu)
+- [Requirements](#requirements)
+- [Quick Start (Docker)](#quick-start-docker)
+- [GLPI Configuration](#glpi-configuration)
+- [Local Development](#local-development)
+- [Game Mechanics](#game-mechanics)
 
 ---
 
-## Fonctionnalités
+## Features
 
 | Module | Description |
 |---|---|
-| **Aventurier** | Profil RPG par technicien — XP, niveau, stats (Force / Constitution / Agilité / Esprit) |
-| **Forge** | 15 équipements en 5 tiers (armes, armures, amulettes) avec passifs et améliorations +1→+20 |
-| **Arène** | Combats PvP au tour par tour avec esquive, passifs et système de mise en or |
-| **Expédition** | Mission de 2h avec loot pondéré (3 rolls par expédition, pity garanti à 10 expéditions) |
-| **Badges** | 20 succès débloquables (tickets, combats, forge, niveaux) |
-| **Classement** | Tableau des techniciens par XP / niveau |
-| **Worker** | Synchronisation automatique avec GLPI — attribue XP et badges à chaque ticket fermé |
+| **Adventurer** | RPG profile per technician — XP, level, stats (Strength / Constitution / Agility / Spirit) |
+| **Forge** | 15 items across 5 tiers (weapons, armors, amulets) with passives and upgrades +1→+20 |
+| **Arena** | Turn-based PvP combat with dodge, passives and gold betting |
+| **Expedition** | 2-hour mission with weighted loot (3 rolls per expedition, pity guaranteed at 10 runs) |
+| **Badges** | 20 unlockable achievements (tickets, combat, forge, levels) |
+| **Leaderboard** | Technician ranking by XP / level |
+| **Worker** | Automatic GLPI sync — awards XP and badges on every closed ticket |
 
 ---
 
@@ -39,8 +39,8 @@ Chaque ticket résolu rapporte de l'XP, fait monter de niveau et débloque équi
 │                                             │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
 │  │   app    │  │  worker  │  │  ollama  │  │
-│  │Streamlit │  │sync GLPI │  │   LLM    │  │
-│  │ :8501    │  │(boucle)  │  │ :11434   │  │
+│  │Streamlit │  │GLPI sync │  │   LLM    │  │
+│  │ :8501    │  │ (loop)   │  │ :11434   │  │
 │  └────┬─────┘  └────┬─────┘  └──────────┘  │
 │       └─────────────┴──────────┐            │
 │                          ┌─────┴──────┐     │
@@ -50,192 +50,186 @@ Chaque ticket résolu rapporte de l'XP, fait monter de niveau et débloque équi
 └─────────────────────────────────────────────┘
                      │
               ┌──────┴──────┐
-              │ GLPI (ext.) │   votre instance existante
+              │ GLPI (ext.) │   your existing instance
               └─────────────┘
 ```
 
-- **app** — interface web Streamlit, accessible sur le réseau interne
-- **worker** — interroge GLPI toutes les N secondes, traite les tickets fermés via LLM, attribue l'XP
-- **ollama** — modèle LLM local (mistral) pour scorer la difficulté et la conformité des tickets
-- **db** — PostgreSQL, stocke joueurs, équipements, combats, expéditions, badges
-- **GLPI** — votre instance existante, non modifiée
+- **app** — Streamlit web interface, accessible on your internal network
+- **worker** — polls GLPI every N seconds, processes closed tickets via LLM, awards XP
+- **ollama** — local LLM (mistral) to score ticket difficulty and compliance
+- **db** — PostgreSQL, stores players, equipment, combats, expeditions, badges
+- **GLPI** — your existing instance, untouched
 
 ---
 
-## Prérequis
+## Requirements
 
-- **Docker** >= 24 et **Docker Compose** >= 2.20
-- Accès réseau à votre instance GLPI (API REST activée)
-- ~4 Go de RAM disponibles sur le serveur (principalement pour Ollama + mistral)
-- ~5 Go d'espace disque (image Ollama + modèle mistral ~4 Go)
+- **Docker** >= 24 and **Docker Compose** >= 2.20
+- Network access to your GLPI instance (REST API enabled)
+- ~4 GB of available RAM on the server (mainly for Ollama + mistral)
+- ~5 GB of disk space (Ollama image + mistral model ~4 GB)
 
 ---
 
-## Installation rapide (Docker)
+## Quick Start (Docker)
 
-### 1. Cloner le dépôt
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/Baltemor369/GLPI-leveling.git
 cd GLPI-leveling
 ```
 
-### 2. Configurer l'environnement
+### 2. Configure the environment
 
 ```bash
 cp .env.example .env
-nano .env   # ou vim, notepad, etc.
+nano .env   # or vim, notepad, etc.
 ```
 
-Remplir obligatoirement :
+Required variables:
 
 | Variable | Description |
 |---|---|
-| `POSTGRES_PASSWORD` | Mot de passe PostgreSQL (choisir un mot de passe fort) |
-| `DATABASE_URL` | Remplacer `changez_moi` par le même mot de passe que ci-dessus |
-| `GLPI_API_BASE_URL` | URL de l'API GLPI, ex: `https://glpi.entreprise.com/api.php` |
-| `GLPI_OAUTH_CLIENT_ID` | Client OAuth2 créé dans GLPI (voir section suivante) |
-| `GLPI_OAUTH_CLIENT_SECRET` | Secret du client OAuth2 |
-| `GLPI_BOT_USERNAME` | Nom du compte bot dans GLPI |
-| `GLPI_BOT_PASSWORD` | Mot de passe du compte bot |
+| `POSTGRES_PASSWORD` | PostgreSQL password (choose a strong password) |
+| `DATABASE_URL` | Replace `changez_moi` with the same password as above |
+| `GLPI_API_BASE_URL` | GLPI REST API URL, e.g. `https://glpi.company.com/api.php` |
+| `GLPI_OAUTH_CLIENT_ID` | OAuth2 client created in GLPI (see next section) |
+| `GLPI_OAUTH_CLIENT_SECRET` | OAuth2 client secret |
+| `GLPI_BOT_USERNAME` | Bot account username in GLPI |
+| `GLPI_BOT_PASSWORD` | Bot account password |
 
-### 3. Lancer
+### 3. Launch
 
 ```bash
 bash start.sh
 ```
 
-Le script :
-1. Démarre la base de données et Ollama
-2. Télécharge le modèle mistral (première fois uniquement, ~4 Go)
-3. Lance l'application et le worker
+The script will:
+1. Start the database and Ollama
+2. Download the mistral model (first time only, ~4 GB)
+3. Start the app and the worker
 
-L'interface est accessible sur `http://IP_SERVEUR:8501`.
+The interface is available at `http://SERVER_IP:8501`.
 
-### Commandes utiles
+### Useful commands
 
 ```bash
-# Voir les logs en temps réel
+# Stream all logs
 docker compose logs -f
 
-# Logs d'un service spécifique
+# Logs for a specific service
 docker compose logs -f worker
 
-# Arrêter
+# Stop all services
 docker compose down
 
-# Arrêter et supprimer les données
+# Stop and delete all data
 docker compose down -v
 ```
 
-### Mise à jour & patches
+### Updates & patches
 
-Après chaque mise à jour du code source :
+After pulling new code:
 
 ```bash
 git pull
 docker compose up -d --build app worker
 ```
 
-Le `--build` reconstruit uniquement l'image applicative. La base de données et Ollama ne sont **pas** touchés — leurs données sont dans des volumes persistants.
+The `--build` flag only rebuilds the application image. The database and Ollama are **not** affected — their data lives in persistent volumes.
 
-| Changement | Commande |
+| What changed | Command |
 |---|---|
-| Code Python (`app/`, `sync/`) | `git pull && docker compose up -d --build app worker` |
-| Nouveau package (`requirements.txt`) | `git pull && docker compose up -d --build app worker` |
-| Variables d'environnement (`.env`) | `docker compose restart app worker` |
-| `docker-compose.yml` uniquement | `docker compose up -d` |
+| Python code (`app/`, `sync/`) | `git pull && docker compose up -d --build app worker` |
+| New package (`requirements.txt`) | `git pull && docker compose up -d --build app worker` |
+| Environment variables (`.env`) | `docker compose restart app worker` |
+| `docker-compose.yml` only | `docker compose up -d` |
 
 ---
 
-## Configuration GLPI
+## GLPI Configuration
 
-### Créer un client OAuth2
+### Create an OAuth2 client
 
-1. Dans GLPI : **Configuration → OAuth 2.0 → Ajouter un client**
-2. Nom : `GlpiLeveling`
-3. Cocher le grant type `Resource Owner Password`
-4. Copier le `client_id` et `client_secret` générés dans votre `.env`
+1. In GLPI: **Setup → OAuth 2.0 → Add a client**
+2. Name: `GlpiLeveling`
+3. Enable the `Resource Owner Password` grant type
+4. Copy the generated `client_id` and `client_secret` into your `.env`
 
-### Créer un compte bot
+### Create a bot account
 
-1. **Administration → Utilisateurs → Ajouter**
-2. Nom : `bot-glpileveling` (ou au choix)
-3. Droits minimum requis : lecture sur les tickets, lecture sur les utilisateurs
-4. Renseigner `GLPI_BOT_USERNAME` et `GLPI_BOT_PASSWORD` dans votre `.env`
+1. **Administration → Users → Add**
+2. Name: `bot-glpileveling` (or any name)
+3. Minimum required rights: read access on tickets and users
+4. Set `GLPI_BOT_USERNAME` and `GLPI_BOT_PASSWORD` in your `.env`
 
-### Se connecter à l'application
+### Logging into the app
 
-Les techniciens se connectent avec leurs identifiants GLPI habituels — aucun compte séparé à créer.
+Technicians log in with their regular GLPI credentials — no separate account needed.
 
 ---
 
-## Développement local
+## Local Development
 
-Sans Docker, pour développer sur Windows :
+Without Docker, to develop on Windows:
 
 ```powershell
-# Installer les dépendances
+# Install dependencies
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 
-# Lancer l'app
+# Start the app
 streamlit run app/Aventurier.py --server.port 8501
 
-# Lancer le worker (dans un autre terminal)
+# Start the worker (in a separate terminal)
 cd sync
 python worker.py
 ```
 
-Prérequis supplémentaires : PostgreSQL local et Ollama installé séparément.
-
-Pour relancer rapidement après un crash :
-
-```powershell
-.\restart_app.ps1
-```
+Additional requirements: a local PostgreSQL instance and Ollama installed separately.
 
 ---
 
-## Mécanique de jeu
+## Game Mechanics
 
-### XP par ticket
+### XP per ticket
 
 ```
-XP = base_catégorie × coeff_urgence × coeff_impact × coeff_difficulté × coeff_rapidité
+XP = category_base × urgency_coeff × impact_coeff × difficulty_coeff × speed_coeff
 ```
 
-| Paramètre | Valeur |
+| Parameter | Value |
 |---|---|
-| Base Serveur | 5 XP |
-| Base Poste client | 3 XP |
-| Base WiFi / Périphérique | 2 XP |
-| Urgence haute (≥ 4) | × 1.2 |
-| Impact haut (≥ 4) | × 1.2 |
-| Difficulté LLM (1–10) | × (1 + score/10) |
-| Rapidité J0 | × 1.5 |
-| Rapidité J5+ | × 1.0 (plancher) |
+| Server category base | 5 XP |
+| Workstation category base | 3 XP |
+| WiFi / Peripheral base | 2 XP |
+| High urgency (≥ 4) | × 1.2 |
+| High impact (≥ 4) | × 1.2 |
+| LLM difficulty (1–10) | × (1 + score/10) |
+| Same-day resolution | × 1.5 |
+| Resolution after 5+ days | × 1.0 (floor) |
 
-Le technicien créateur du ticket reçoit aussi un **XP de conformité** selon la qualité de saisie évaluée par le LLM (titre, description, coordonnées).
+The technician who created the ticket also receives **compliance XP** based on the quality of the ticket fields (title, description, contact info) as evaluated by the LLM.
 
-### Montée de niveau
+### Leveling up
 
-Chaque niveau rapporte **3 points de stats** à distribuer librement entre Force, Constitution, Agilité et Esprit.
+Each level grants **3 stat points** to freely distribute across Strength, Constitution, Agility and Spirit.
 
 ### Forge
 
-- 15 équipements en 5 tiers (Fer → Acier → Mithril → Runique → Néant)
-- Tiers 3–5 nécessitent des matériaux obtenus en expédition
-- Améliorations +1 à +20 : coût = `prix_tier × niveau × 0.6`
+- 15 items across 5 tiers (Iron → Steel → Mithril → Runic → Void)
+- Tiers 3–5 require materials obtained from expeditions
+- Upgrades +1 to +20: cost = `tier_price × level × 0.6`
 
-### Expédition (2h)
+### Expedition (2h)
 
-- 3 rolls pondérés par expédition (Or 38%, Bois 28%, Minerai 20%, Cristal 10%, Essence 4%)
-- Pity : garantit une Essence du Néant après 10 expéditions sans en obtenir
+- 3 weighted rolls per expedition (Gold 38%, Wood 28%, Iron Ore 20%, Runic Crystal 10%, Void Essence 4%)
+- Pity system: guarantees a Void Essence after 10 expeditions without obtaining one
 
-### Arène PvP
+### PvP Arena
 
-- Combats au tour par tour avec mise d'or optionnelle
-- Esquive basée sur l'Agilité du défenseur et la Force de l'attaquant
-- 3 types d'attaque avec malus de vitesse (Rapide 0%, Lourde -20%, Critique -40%)
+- Turn-based combat with optional gold bets
+- Dodge chance based on defender's Agility vs attacker's Strength
+- 3 attack types with speed penalties (Quick 0%, Heavy -20%, Critical -40%)
