@@ -325,6 +325,42 @@ hr {
     margin: 16px 0 !important;
     opacity: 0.5 !important;
 }
+
+/* ── Fond sombre immédiat (avant injection du CSS Streamlit) ──── */
+/* Évite le flash blanc au changement de page */
+html, body { background-color: #2c1810 !important; }
+
+/* ── Transition de page : fade-in du contenu ─────────────────── */
+@keyframes glpi-page-in {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0);   }
+}
+[data-testid="stMainBlockContainer"] {
+    animation: glpi-page-in 0.3s ease-out;
+}
+
+/* ── Spinner "Vérification des parchemins" ───────────────────── */
+/* Forcer l'animation à tourner (certains !important dans le CSS peuvent la bloquer) */
+[data-testid="stSpinner"] * {
+    animation-play-state: running !important;
+}
+/* Texte du spinner */
+[data-testid="stSpinner"] p,
+[data-testid="stSpinner"] span {
+    color: var(--or) !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 1px !important;
+}
+/* Roue SVG */
+[data-testid="stSpinner"] svg {
+    stroke: var(--or) !important;
+}
+/* Fallback border-spinner (versions Streamlit plus anciennes) */
+[data-testid="stSpinner"] > div > div {
+    border-color: var(--or-sombre) !important;
+    border-top-color: var(--or) !important;
+}
 </style>
 """
 
