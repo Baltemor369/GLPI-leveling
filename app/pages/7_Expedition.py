@@ -217,7 +217,7 @@ def bloc_expedition():
                         transition:width 1s"></div>
         </div>
         <div style="color:var(--gris);font-size:0.8rem">
-            Retour prévu : {fin.strftime('%H:%M')}
+            Retour prévu : {fin.astimezone().strftime('%H:%M')}
         </div>
         """, unsafe_allow_html=True)
 

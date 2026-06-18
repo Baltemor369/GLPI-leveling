@@ -41,6 +41,8 @@ services:
       ollama:
         condition: service_healthy
     env_file: .env
+    environment:
+      TZ: ${TZ:-Europe/Paris}
     restart: unless-stopped
 
   # ── Worker de synchronisation GLPI ──────────────────────────────────────────
@@ -53,6 +55,8 @@ services:
       ollama:
         condition: service_healthy
     env_file: .env
+    environment:
+      TZ: ${TZ:-Europe/Paris}
     restart: unless-stopped
 
 volumes:
