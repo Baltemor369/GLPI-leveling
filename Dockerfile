@@ -1,5 +1,7 @@
 FROM python:3.11-slim
 
+RUN addgroup --system app && adduser --system --ingroup app app
+
 WORKDIR /app
 
 COPY requirements.txt .
@@ -13,6 +15,10 @@ RUN python patch_streamlit.py && rm patch_streamlit.py
 
 COPY sync/ ./sync/
 COPY app/  ./app/
+
+RUN chown -R app:app /app
+
+USER app
 
 ENV PYTHONPATH=/app/sync:/app/app
 ENV PYTHONIOENCODING=utf-8

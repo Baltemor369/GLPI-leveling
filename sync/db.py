@@ -341,7 +341,7 @@ def lancer_expedition(conn, joueur_id: int, duree_heures: int) -> int:
     with conn.cursor() as cur:
         cur.execute("""
             INSERT INTO expeditions (joueur_id, fin)
-            VALUES (%s, NOW() + INTERVAL '%s hours') RETURNING id
+            VALUES (%s, NOW() + make_interval(hours => %s)) RETURNING id
         """, (joueur_id, duree_heures))
         exp_id = cur.fetchone()[0]
     conn.commit()
