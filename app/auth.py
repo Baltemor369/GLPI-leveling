@@ -69,7 +69,7 @@ def _save_session(joueur_id: int, username: str, ctrl: CookieController):
     token = _create_token(joueur_id, username)
     st.session_state["joueur_id"] = joueur_id
     st.session_state["username"]  = username
-    ctrl.set(COOKIE_NAME, token, max_age=COOKIE_MAX_AGE, path="/", samesite="Strict")
+    ctrl.set(COOKIE_NAME, token, max_age=COOKIE_MAX_AGE)
 
 
 def _restore_from_cookie(ctrl: CookieController) -> bool:
