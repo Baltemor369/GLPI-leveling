@@ -15,7 +15,12 @@ html = open(index_path, encoding="utf-8").read()
 # aucune surface blanche apparaître pendant la transition React.
 CSS = (
     "<style>"
-    "html,body,#root,.stApp,[data-testid='stApp']"
+    "html,body,#root,.stApp,[data-testid='stApp'],"
+    "section[data-testid='stSidebar'],"
+    "[data-testid='stSidebarContent'],"
+    "[data-testid='stSidebarUserContent'],"
+    "[data-testid='stHeader'],"
+    "[data-testid='stToolbar']"
     "{background-color:#2c1810!important;margin:0;padding:0}"
     "</style>"
 )
