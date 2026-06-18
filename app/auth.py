@@ -194,8 +194,20 @@ def _show_login_form():
             if not username or not password:
                 st.error("Remplis les deux champs.")
                 return
-            with st.spinner("Vérification des parchemins..."):
-                result = login_glpi(username, password)
+            _spin = st.empty()
+            _spin.markdown(
+                "<div style='display:flex;align-items:center;gap:10px;padding:6px 0'>"
+                "<div style='width:16px;height:16px;border-radius:50%;"
+                "border:2px solid #8a6a1a;border-top-color:#c9a84c;"
+                "animation:glpi-spin 0.7s linear infinite;flex-shrink:0'></div>"
+                "<span style='color:#c9a84c;font-family:Cinzel,serif;"
+                "font-size:0.78rem;letter-spacing:1.5px'>"
+                "V&#xe9;rification des parchemins...</span>"
+                "</div>",
+                unsafe_allow_html=True,
+            )
+            result = login_glpi(username, password)
+            _spin.empty()
             if result is None:
                 st.error("Identifiants GLPI incorrects.")
             elif result["glpi_id"] is None:

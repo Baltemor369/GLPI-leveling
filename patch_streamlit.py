@@ -22,6 +22,7 @@ CSS = (
     "[data-testid='stHeader'],"
     "[data-testid='stToolbar']"
     "{background-color:#2c1810!important;margin:0;padding:0}"
+    "@keyframes glpi-spin{to{transform:rotate(360deg)}}"
     "</style>"
 )
 
