@@ -61,6 +61,7 @@ def _save_session(joueur_id: int, username: str):
     token = _create_token(joueur_id, username)
     st.session_state["joueur_id"] = joueur_id
     st.session_state["username"]  = username
+    st.session_state["token"]     = token
     st.query_params["token"]      = token
 
 
@@ -74,6 +75,7 @@ def _restore_from_token() -> bool:
         return False
     st.session_state["joueur_id"] = sess["joueur_id"]
     st.session_state["username"]  = sess["username"]
+    st.session_state["token"]     = token
     return True
 
 
@@ -214,6 +216,10 @@ def require_login(main_page: bool = False) -> int:
     - sinon → formulaire de login (main) ou redirect (sous-pages)
     """
     if "joueur_id" in st.session_state:
+        # Réinjecte le token dans l'URL si la navigation l'a effacé
+        # (sans ça, F5 sur une sous-page déconnecte car l'URL n'a plus de token)
+        if "token" in st.session_state and not st.query_params.get("token"):
+            st.query_params["token"] = st.session_state["token"]
         return st.session_state["joueur_id"]
 
     if _restore_from_token():
