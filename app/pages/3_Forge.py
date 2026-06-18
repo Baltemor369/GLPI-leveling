@@ -44,21 +44,21 @@ CATALOGUE = [
     # ARMES
     {"nom": "Épée en Fer",        "type": "arme",   "bonus_stat": "force_p",        "valeur_bonus": 5,  "cout": 50,   "tier": 1, "passif_code": None,             "passif_desc": None},
     {"nom": "Lame d'Acier",       "type": "arme",   "bonus_stat": "force_p",        "valeur_bonus": 12, "cout": 150,  "tier": 2, "passif_code": None,             "passif_desc": None},
-    {"nom": "Épée de Mithril",    "type": "arme",   "bonus_stat": "force_p",        "valeur_bonus": 22, "cout": 500,  "tier": 3, "passif_code": "saignement",     "passif_desc": "⚡ Saignement — 20% chance +3 dégâts bonus"},
-    {"nom": "Lame Runique",       "type": "arme",   "bonus_stat": "force_p",        "valeur_bonus": 35, "cout": 1000, "tier": 4, "passif_code": "vampirisme",     "passif_desc": "💉 Vampirisme — récupère 25% des dégâts infligés"},
-    {"nom": "Épée du Néant",      "type": "arme",   "bonus_stat": "force_p",        "valeur_bonus": 50, "cout": 5000, "tier": 5, "passif_code": "execution",      "passif_desc": "💀 Exécution — adverse < 20% PV → dégâts ×1.5"},
+    {"nom": "Épée de Mithril",    "type": "arme",   "bonus_stat": "force_p",        "valeur_bonus": 22, "cout": 250,  "tier": 3, "passif_code": "saignement",     "passif_desc": "⚡ Saignement — 20% chance +3 dégâts bonus"},
+    {"nom": "Lame Runique",       "type": "arme",   "bonus_stat": "force_p",        "valeur_bonus": 35, "cout": 500,  "tier": 4, "passif_code": "vampirisme",     "passif_desc": "💉 Vampirisme — récupère 25% des dégâts infligés"},
+    {"nom": "Épée du Néant",      "type": "arme",   "bonus_stat": "force_p",        "valeur_bonus": 50, "cout": 2000, "tier": 5, "passif_code": "execution",      "passif_desc": "💀 Exécution — adverse < 20% PV → dégâts ×1.5"},
     # ARMURES
     {"nom": "Tunique de Cuir",    "type": "armure", "bonus_stat": "esprit_res",     "valeur_bonus": 5,  "cout": 50,   "tier": 1, "passif_code": None,             "passif_desc": None},
     {"nom": "Cotte de Mailles",   "type": "armure", "bonus_stat": "esprit_res",     "valeur_bonus": 12, "cout": 150,  "tier": 2, "passif_code": None,             "passif_desc": None},
-    {"nom": "Armure de Plates",   "type": "armure", "bonus_stat": "esprit_res",     "valeur_bonus": 22, "cout": 500,  "tier": 3, "passif_code": "bouclier_pv",    "passif_desc": "🔰 Bouclier — +5% RES basé sur vos PV max"},
-    {"nom": "Armure Runique",     "type": "armure", "bonus_stat": "esprit_res",     "valeur_bonus": 35, "cout": 1000, "tier": 4, "passif_code": "epines",         "passif_desc": "🔥 Épines — renvoie 15% des dégâts reçus"},
-    {"nom": "Armure du Néant",    "type": "armure", "bonus_stat": "esprit_res",     "valeur_bonus": 50, "cout": 5000, "tier": 5, "passif_code": "immunite",       "passif_desc": "🛡️ Immunité — 25% chance d'ignorer les dégâts"},
+    {"nom": "Armure de Plates",   "type": "armure", "bonus_stat": "esprit_res",     "valeur_bonus": 22, "cout": 250,  "tier": 3, "passif_code": "bouclier_pv",    "passif_desc": "🔰 Bouclier — +5% RES basé sur vos PV max"},
+    {"nom": "Armure Runique",     "type": "armure", "bonus_stat": "esprit_res",     "valeur_bonus": 35, "cout": 500,  "tier": 4, "passif_code": "epines",         "passif_desc": "🔥 Épines — renvoie 15% des dégâts reçus"},
+    {"nom": "Armure du Néant",    "type": "armure", "bonus_stat": "esprit_res",     "valeur_bonus": 50, "cout": 2000, "tier": 5, "passif_code": "immunite",       "passif_desc": "🛡️ Immunité — 25% chance d'ignorer les dégâts"},
     # AMULETTES
     {"nom": "Amulette de Vitalité","type": "amul",  "bonus_stat": "constitution_pv","valeur_bonus": 8,  "cout": 50,   "tier": 1, "passif_code": None,             "passif_desc": None},
     {"nom": "Bague de Célérité",  "type": "amul",   "bonus_stat": "agilite_vit",    "valeur_bonus": 6,  "cout": 150,  "tier": 2, "passif_code": None,             "passif_desc": None},
-    {"nom": "Pendentif de l'Aube","type": "amul",   "bonus_stat": "constitution_pv","valeur_bonus": 15, "cout": 500,  "tier": 3, "passif_code": "regeneration",   "passif_desc": "💚 Régénération — récupère 5% PV max/tour"},
-    {"nom": "Talisman Runique",   "type": "amul",   "bonus_stat": "agilite_vit",    "valeur_bonus": 10, "cout": 1000, "tier": 4, "passif_code": "celerite_niveau","passif_desc": "💨 Célérité — +0.5% esquive par niveau"},
-    {"nom": "Orbe du Néant",      "type": "amul",   "bonus_stat": "constitution_pv","valeur_bonus": 20, "cout": 5000, "tier": 5, "passif_code": "transcendance",  "passif_desc": "✨ Transcendance — toutes les stats +1 par 2 niveaux"},
+    {"nom": "Pendentif de l'Aube","type": "amul",   "bonus_stat": "constitution_pv","valeur_bonus": 15, "cout": 250,  "tier": 3, "passif_code": "regeneration",   "passif_desc": "💚 Régénération — récupère 5% PV max/tour"},
+    {"nom": "Talisman Runique",   "type": "amul",   "bonus_stat": "agilite_vit",    "valeur_bonus": 10, "cout": 500,  "tier": 4, "passif_code": "celerite_niveau","passif_desc": "💨 Célérité — +0.5% esquive par niveau"},
+    {"nom": "Orbe du Néant",      "type": "amul",   "bonus_stat": "constitution_pv","valeur_bonus": 20, "cout": 2000, "tier": 5, "passif_code": "transcendance",  "passif_desc": "✨ Transcendance — toutes les stats +1 par 2 niveaux"},
 ]
 
 # Matériaux requis par tier (en plus de l'or)

@@ -94,6 +94,9 @@ st.markdown("---")
 conn  = get_conn()
 stock = get_materiaux(conn, joueur_id)
 pity_actuel = get_pity(conn, joueur_id)
+with conn.cursor() as _cur:
+    _cur.execute("SELECT or_monnaie FROM joueurs WHERE id = %s", (joueur_id,))
+    stock["or"] = (_cur.fetchone() or [0])[0]
 conn.close()
 
 st.markdown("### 🎒 Vos matériaux")
