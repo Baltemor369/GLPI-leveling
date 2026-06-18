@@ -9,6 +9,7 @@ import db_queries as db
 import style
 from db import xp_requis_pour_niveau
 from auth import require_login, render_sidebar
+from version import VERSION
 
 # ── Worker en arrière-plan (démarre une seule fois par processus) ───────────
 def _start_worker():
@@ -142,3 +143,8 @@ else:
             <br><small style="color:var(--gris)">{t['analyse_llm']}</small>
         </div>
         """, unsafe_allow_html=True)
+
+st.markdown(
+    f"<div style='text-align:right;color:var(--gris);font-size:0.7rem;margin-top:32px'>v{VERSION}</div>",
+    unsafe_allow_html=True,
+)

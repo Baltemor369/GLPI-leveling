@@ -158,6 +158,7 @@ section[data-testid="stSidebar"]          { display: none !important; }
 
 
 def _show_login_form():
+    from version import VERSION
     st.markdown(_CSS_HIDE_SIDEBAR, unsafe_allow_html=True)
     st.markdown("""
     <div style="text-align:center;margin:60px 0 30px">
@@ -183,6 +184,11 @@ def _show_login_form():
             username  = st.text_input("Identifiant GLPI", placeholder="prenom.nom")
             password  = st.text_input("Mot de passe", type="password")
             submitted = st.form_submit_button("Entrer dans le Royaume", use_container_width=True)
+            st.markdown(
+                f"<div style='text-align:center;margin-top:12px;color:var(--gris);font-size:0.7rem'>"
+                f"v{VERSION}</div>",
+                unsafe_allow_html=True,
+            )
 
         if submitted:
             if not username or not password:
