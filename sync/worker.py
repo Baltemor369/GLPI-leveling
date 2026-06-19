@@ -148,6 +148,12 @@ def boucle_principale():
             print(f"  {len(clos)} ticket(s) clos trouvé(s).")
             for ticket in clos:
                 traiter_ticket(conn, glpi, ticket)
+
+            # Pass 3 : purger les sessions expirées
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM sessions WHERE expires < NOW()")
+            conn.commit()
+
             conn.close()
         except Exception as e:
             print(f"  Erreur : {e}")
