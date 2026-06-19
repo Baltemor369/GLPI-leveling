@@ -17,10 +17,14 @@ def tous_les_joueurs():
     with get_conn() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute("""
-                SELECT id, username, level, xp, or_monnaie,
-                       force_p, constitution_pv, agilite_vit, esprit_res,
-                       points_a_attribuer
-                FROM joueurs ORDER BY xp DESC
+                SELECT j.id, j.username, j.level, j.xp, j.or_monnaie,
+                       j.force_p, j.constitution_pv, j.agilite_vit, j.esprit_res,
+                       j.points_a_attribuer,
+                       COUNT(c.id) AS victoires
+                FROM joueurs j
+                LEFT JOIN combats c ON c.vainqueur_id = j.id AND c.statut = 'termine'
+                GROUP BY j.id
+                ORDER BY j.xp DESC
             """)
             return [dict(r) for r in cur.fetchall()]
 
