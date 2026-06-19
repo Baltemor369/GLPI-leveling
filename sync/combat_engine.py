@@ -7,6 +7,13 @@ import psycopg2.extras
 import badge_engine
 
 OR_VICTOIRE_BASE = 10
+ELO_K            = 32
+
+
+def _elo_delta(pc_vainqueur: int, pc_perdant: int) -> int:
+    """PC gagnés par le vainqueur (formule Elo K=32). Minimum 1."""
+    expected = 1 / (1 + 10 ** ((pc_perdant - pc_vainqueur) / 400))
+    return max(1, round(ELO_K * (1 - expected)))
 
 # Actions disponibles : (id, label, multiplicateur, description, malus_vitesse)
 ACTIONS = [
@@ -187,6 +194,7 @@ def jouer_action(conn, combat_id: int, joueur_id: int, action_id: str) -> dict:
         _, label, multiplicateur, _, malus_vitesse = action
 
         degats     = 0
+        delta_pc   = 0
         extra_logs = []
 
         # ── Régénération (Pendentif de l'Aube T3) — début de tour ────────────
@@ -279,15 +287,34 @@ def jouer_action(conn, combat_id: int, joueur_id: int, action_id: str) -> dict:
         """, (nouveau_statut, prochain, new_pv_att, new_pv_def, nouveau_log, combat_id))
 
         if nouveau_statut == "termine":
-            vainqueur = _get_joueur(cur, vainqueur_id)
+            vainqueur    = _get_joueur(cur, vainqueur_id)
+            perdant_data = cible if vainqueur_id == joueur_id else attaqueur
+
+            # Or victoire
             gain = combat["mise"] * 2 + OR_VICTOIRE_BASE
             cur.execute(
                 "UPDATE joueurs SET or_monnaie = or_monnaie + %s WHERE id = %s",
                 (gain, vainqueur_id),
             )
+
+            # Points de Combat (Elo)
+            delta_pc = _elo_delta(vainqueur["points_combat"], perdant_data["points_combat"])
+            cur.execute(
+                "UPDATE joueurs SET points_combat = points_combat + %s WHERE id = %s",
+                (delta_pc, vainqueur_id),
+            )
+            cur.execute(
+                "UPDATE joueurs SET points_combat = GREATEST(0, points_combat - %s) WHERE id = %s",
+                (delta_pc, perdant_id),
+            )
+
             cur.execute(
                 "UPDATE combats SET log_combat = log_combat || %s, vainqueur_id = %s WHERE id = %s",
-                (f"\nVICTOIRE de {vainqueur['username']} ! (+{gain} or)\n", vainqueur_id, combat_id),
+                (
+                    f"\nVICTOIRE de {vainqueur['username']} ! (+{gain} or, +{delta_pc} PC)\n",
+                    vainqueur_id,
+                    combat_id,
+                ),
             )
 
     conn.commit()
@@ -310,6 +337,7 @@ def jouer_action(conn, combat_id: int, joueur_id: int, action_id: str) -> dict:
         "pv_restants":     pv_def_now,
         "termine":         nouveau_statut == "termine",
         "nouveaux_badges": nouveaux_badges,
+        "delta_pc":        delta_pc,
     }
 
 

@@ -19,7 +19,7 @@ def tous_les_joueurs():
             cur.execute("""
                 SELECT j.id, j.username, j.level, j.xp, j.or_monnaie,
                        j.force_p, j.constitution_pv, j.agilite_vit, j.esprit_res,
-                       j.points_a_attribuer,
+                       j.points_a_attribuer, j.points_combat,
                        COUNT(c.id) AS victoires
                 FROM joueurs j
                 LEFT JOIN combats c ON c.vainqueur_id = j.id AND c.statut = 'termine'

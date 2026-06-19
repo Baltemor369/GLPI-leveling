@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS joueurs (
     agilite_vit         INTEGER NOT NULL DEFAULT 10,
     esprit_res          INTEGER NOT NULL DEFAULT 10,
     points_a_attribuer  INTEGER NOT NULL DEFAULT 0,
-    pity_expedition     INTEGER NOT NULL DEFAULT 0
+    pity_expedition     INTEGER NOT NULL DEFAULT 0,
+    points_combat       INTEGER NOT NULL DEFAULT 1000
 );
 
 CREATE TABLE IF NOT EXISTS equipements (
@@ -148,6 +149,10 @@ MIGRATIONS = [
     # 4 — pity expéditions
     """
     ALTER TABLE joueurs ADD COLUMN IF NOT EXISTS pity_expedition INTEGER NOT NULL DEFAULT 0;
+    """,
+    # 5 — points de combat Elo (initialisés à 1000 pour tous)
+    """
+    ALTER TABLE joueurs ADD COLUMN IF NOT EXISTS points_combat INTEGER NOT NULL DEFAULT 1000;
     """,
 ]
 
