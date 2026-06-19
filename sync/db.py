@@ -358,10 +358,15 @@ def lancer_expedition(conn, joueur_id: int, duree_heures: int) -> int:
     return exp_id
 
 
-def marquer_reclamee(conn, expedition_id: int):
+def marquer_reclamee(conn, expedition_id: int) -> bool:
+    """Retourne False si l'expédition était déjà réclamée (garde anti-double-claim).
+    Ne commit pas — le caller gère la transaction."""
     with conn.cursor() as cur:
-        cur.execute("UPDATE expeditions SET reclamee = TRUE WHERE id = %s", (expedition_id,))
-    conn.commit()
+        cur.execute(
+            "UPDATE expeditions SET reclamee = TRUE WHERE id = %s AND reclamee = FALSE",
+            (expedition_id,),
+        )
+        return cur.rowcount == 1
 
 
 # ---------------------------------------------------------------------------
@@ -379,6 +384,7 @@ def get_materiaux(conn, joueur_id: int) -> dict:
 
 
 def ajouter_materiau(conn, joueur_id: int, code: str, quantite: int):
+    """Ne commit pas — le caller gère la transaction."""
     with conn.cursor() as cur:
         cur.execute("""
             INSERT INTO materiaux_joueur (joueur_id, materiau_code, quantite)
@@ -386,7 +392,6 @@ def ajouter_materiau(conn, joueur_id: int, code: str, quantite: int):
             ON CONFLICT (joueur_id, materiau_code)
             DO UPDATE SET quantite = materiaux_joueur.quantite + EXCLUDED.quantite
         """, (joueur_id, code, quantite))
-    conn.commit()
 
 
 def consommer_materiaux(conn, joueur_id: int, materiaux: dict) -> bool:

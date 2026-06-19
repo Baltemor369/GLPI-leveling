@@ -69,7 +69,6 @@ def get_pity(conn, jid: int) -> int:
 def set_pity(conn, jid: int, pity: int):
     with conn.cursor() as cur:
         cur.execute("UPDATE joueurs SET pity_expedition = %s WHERE id = %s", (pity, jid))
-    conn.commit()
 
 
 def afficher_materiaux(stock: dict):
@@ -190,20 +189,25 @@ def bloc_expedition():
             butin, essence_obtenue = rouler_loot(pity)
             pity_info = "garanti" if pity >= PITY_SEUIL else None
 
-            marquer_reclamee(conn, expedition["id"])
+            if not marquer_reclamee(conn, expedition["id"]):
+                conn.rollback()
+                conn.close()
+                st.warning("Cette expédition a déjà été réclamée.")
+                st.rerun()
+
             for item in butin:
                 if item["code"] == "or":
                     with conn.cursor() as cur:
                         cur.execute(
                             "UPDATE joueurs SET or_monnaie = or_monnaie + %s WHERE id = %s",
-                            (item["quantite"], joueur_id)
+                            (item["quantite"], joueur_id),
                         )
-                    conn.commit()
                 else:
                     ajouter_materiau(conn, joueur_id, item["code"], item["quantite"])
 
             nouveau_pity = 0 if essence_obtenue else pity + 1
             set_pity(conn, joueur_id, nouveau_pity)
+            conn.commit()  # Un seul commit : marquer + loot + pity
             nouveaux_badges = verifier_badges_expedition(conn, joueur_id, butin)
             conn.close()
 
