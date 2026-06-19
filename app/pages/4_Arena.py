@@ -138,8 +138,10 @@ def vue_combat_actif(combat_id, joueur_id):
                 """, unsafe_allow_html=True)
                 if st.button(label, key=f"action_{aid}"):
                     c2 = get_conn()
-                    jouer_action(c2, c["id"], joueur_id, aid)
+                    res = jouer_action(c2, c["id"], joueur_id, aid)
                     c2.close()
+                    if res.get("nouveaux_badges"):
+                        st.session_state["combat_badges"] = res["nouveaux_badges"]
                     st.rerun()
     else:
         adversaire = att_j["username"] if joueur_id == c["defenseur_id"] else def_j["username"]
@@ -201,6 +203,10 @@ def vue_defi_attente(combat_id, joueur_id):
 # ══════════════════════════════════════════════════════════════════════════
 # ROUTAGE
 # ══════════════════════════════════════════════════════════════════════════
+if "combat_badges" in st.session_state:
+    for code in st.session_state.pop("combat_badges"):
+        st.success(f"🏅 Badge débloqué : **{code}** !")
+
 conn = get_conn()
 combats_actifs    = get_combats_joueur(conn, joueur_id)
 combat_en_cours   = next((c for c in combats_actifs if c["statut"] == "en_cours"),   None)

@@ -153,10 +153,9 @@ if "butin_reclame" in st.session_state:
                 """, unsafe_allow_html=True)
     else:
         st.warning("Votre équipe est revenue bredouille cette fois...")
-    if nouveaux_badges:
-        st.balloons()
-        for code in nouveaux_badges:
-            st.success(f"🏅 Badge débloqué : **{code}** !")
+    st.balloons()
+    for code in nouveaux_badges:
+        st.success(f"🏅 Badge débloqué : **{code}** !")
     st.markdown("---")
 
 # ── Statut expédition ─────────────────────────────────────────────────────────

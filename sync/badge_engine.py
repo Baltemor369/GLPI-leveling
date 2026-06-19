@@ -181,7 +181,7 @@ def verifier_badges_forge(conn, joueur_id: int) -> list:
 
     with conn.cursor() as cur:
         cur.execute("""
-            SELECT COUNT(*) FROM equipements
+            SELECT COUNT(DISTINCT type) FROM equipements
             WHERE joueur_id = %s AND equipe = TRUE AND tier = 5
               AND amelioration >= 20 AND type IN ('arme','armure','amul')
         """, (joueur_id,))
