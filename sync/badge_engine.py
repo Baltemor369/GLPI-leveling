@@ -61,6 +61,14 @@ def verifier_badges_ticket(conn, joueur_id: int, nom_categorie: str,
             if db.attribuer_badge(conn, joueur_id, "maitre_serveurs"):
                 nouveaux.append("maitre_serveurs")
 
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT COUNT(*) FROM tickets_traites
+            WHERE joueur_id = %s AND date_traitement::date = CURRENT_DATE
+        """, (joueur_id,))
+        if cur.fetchone()[0] >= 5 and db.attribuer_badge(conn, joueur_id, "stakhanoviste"):
+            nouveaux.append("stakhanoviste")
+
     return nouveaux
 
 
@@ -100,6 +108,23 @@ def verifier_badges_combat(conn, vainqueur_id: int, mise: int,
     if mise >= 50 and db.attribuer_badge(conn, vainqueur_id, "haut_risque"):
         nouveaux.append("haut_risque")
 
+    # 3 victoires consécutives
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT COUNT(*) FROM (
+                SELECT vainqueur_id FROM combats
+                WHERE (attaquant_id = %s OR defenseur_id = %s) AND statut = 'termine'
+                ORDER BY id DESC LIMIT 3
+            ) sub WHERE vainqueur_id = %s
+        """, (vainqueur_id, vainqueur_id, vainqueur_id))
+        if cur.fetchone()[0] == 3 and db.attribuer_badge(conn, vainqueur_id, "invaincu"):
+            nouveaux.append("invaincu")
+
+    # Gagner sans avoir utilisé Repos
+    if f"{username_vainqueur} → Repos" not in log_combat:
+        if db.attribuer_badge(conn, vainqueur_id, "sans_pitie"):
+            nouveaux.append("sans_pitie")
+
     return nouveaux
 
 
@@ -128,5 +153,61 @@ def verifier_badges_forge(conn, joueur_id: int) -> list:
         """, (joueur_id,))
         if cur.fetchone()[0] == 3 and db.attribuer_badge(conn, joueur_id, "arsenal_complet"):
             nouveaux.append("arsenal_complet")
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT COUNT(*) FROM equipements WHERE joueur_id = %s AND amelioration >= 5",
+            (joueur_id,),
+        )
+        if cur.fetchone()[0] >= 1 and db.attribuer_badge(conn, joueur_id, "artisan"):
+            nouveaux.append("artisan")
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT COUNT(*) FROM equipements WHERE joueur_id = %s AND tier = 5",
+            (joueur_id,),
+        )
+        if cur.fetchone()[0] >= 1 and db.attribuer_badge(conn, joueur_id, "grand_maitre_forge"):
+            nouveaux.append("grand_maitre_forge")
+
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT COUNT(DISTINCT type) FROM equipements
+            WHERE joueur_id = %s AND equipe = TRUE AND tier = 5
+              AND type IN ('arme','armure','amul')
+        """, (joueur_id,))
+        if cur.fetchone()[0] == 3 and db.attribuer_badge(conn, joueur_id, "set_legendaire"):
+            nouveaux.append("set_legendaire")
+
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT COUNT(*) FROM equipements
+            WHERE joueur_id = %s AND equipe = TRUE AND tier = 5
+              AND amelioration >= 20 AND type IN ('arme','armure','amul')
+        """, (joueur_id,))
+        if cur.fetchone()[0] == 3 and db.attribuer_badge(conn, joueur_id, "perfection_absolue"):
+            nouveaux.append("perfection_absolue")
+
+    return nouveaux
+
+
+def verifier_badges_expedition(conn, joueur_id: int, butin: list) -> list:
+    """Badges déclenchés après réclamation d'une expédition."""
+    nouveaux = []
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT COUNT(*) FROM expeditions WHERE joueur_id = %s AND reclamee = TRUE",
+            (joueur_id,),
+        )
+        count = cur.fetchone()[0]
+
+    for code, seuil in [("explorateur", 1), ("routard", 10)]:
+        if count >= seuil and db.attribuer_badge(conn, joueur_id, code):
+            nouveaux.append(code)
+
+    if any(item["code"] == "essence_neant" for item in butin):
+        if db.attribuer_badge(conn, joueur_id, "chasseur_tresors"):
+            nouveaux.append("chasseur_tresors")
 
     return nouveaux

@@ -11,6 +11,7 @@ import style
 from auth import require_login, render_sidebar
 from db import get_conn, get_expedition_active, lancer_expedition, marquer_reclamee, \
                ajouter_materiau, get_materiaux
+from badge_engine import verifier_badges_expedition
 
 st.set_page_config(page_title="Expédition — GlpiLeveling", page_icon="🗺️", layout="wide")
 style.inject(st)
@@ -134,6 +135,7 @@ st.markdown("---")
 if "butin_reclame" in st.session_state:
     butin = st.session_state.pop("butin_reclame")
     pity_info = st.session_state.pop("pity_info", None)
+    nouveaux_badges = st.session_state.pop("nouveaux_badges_exp", [])
     st.success("🎉 Expédition terminée ! Voici votre butin :")
     if pity_info == "garanti":
         st.info("✨ Pity activé — Essence du Néant garantie !")
@@ -151,7 +153,10 @@ if "butin_reclame" in st.session_state:
                 """, unsafe_allow_html=True)
     else:
         st.warning("Votre équipe est revenue bredouille cette fois...")
-    st.balloons()
+    if nouveaux_badges:
+        st.balloons()
+        for code in nouveaux_badges:
+            st.success(f"🏅 Badge débloqué : **{code}** !")
     st.markdown("---")
 
 # ── Statut expédition ─────────────────────────────────────────────────────────
@@ -200,9 +205,11 @@ def bloc_expedition():
 
             nouveau_pity = 0 if essence_obtenue else pity + 1
             set_pity(conn, joueur_id, nouveau_pity)
+            nouveaux_badges = verifier_badges_expedition(conn, joueur_id, butin)
             conn.close()
 
             st.session_state["butin_reclame"] = butin
+            st.session_state["nouveaux_badges_exp"] = nouveaux_badges
             if pity_info:
                 st.session_state["pity_info"] = pity_info
             st.rerun(scope="app")

@@ -268,8 +268,18 @@ _BADGES_SEED = [
     ("ascension",       "Ascension",           "Atteindre le niveau 5",                                 "🌟"),
     ("seigneur",        "Seigneur",            "Atteindre le niveau 10",                                "🔥"),
     ("legende",         "Légende",             "Atteindre le niveau 15",                                "🌌"),
-    ("forgeron",        "Forgeron",            "Fabriquer son 1er équipement en Forge",                 "🔨"),
-    ("arsenal_complet", "Arsenal Complet",     "Avoir arme + armure + amulette équipés simultanément",  "🧰"),
+    ("forgeron",           "Forgeron",             "Fabriquer son 1er équipement en Forge",                    "🔨"),
+    ("arsenal_complet",    "Arsenal Complet",      "Avoir arme + armure + amulette équipés simultanément",     "🧰"),
+    ("artisan",            "Artisan",              "Améliorer un équipement à +5",                             "⚒️"),
+    ("grand_maitre_forge", "Grand Maître Forgeron","Forger un équipement Tier 5",                              "🌟"),
+    ("set_legendaire",     "Set Légendaire",       "Équiper arme + armure + amulette tous en Tier 5",         "💎"),
+    ("perfection_absolue", "Perfection Absolue",   "Arme + armure + amulette Tier 5 tous améliorés à +20",    "👑"),
+    ("explorateur",        "Explorateur",          "Compléter sa 1ère expédition",                            "🗺️"),
+    ("routard",            "Routard",              "Compléter 10 expéditions",                                "🌍"),
+    ("chasseur_tresors",   "Chasseur de Trésors",  "Rapporter une Essence du Néant d'expédition",             "✨"),
+    ("invaincu",           "Invaincu",             "Remporter 3 combats consécutifs",                         "🔥"),
+    ("sans_pitie",         "Sans Pitié",           "Gagner un combat sans jamais utiliser Repos",             "💀"),
+    ("stakhanoviste",      "Stakhanoviste",        "Résoudre 5 tickets dans la même journée",                 "📋"),
 ]
 
 
