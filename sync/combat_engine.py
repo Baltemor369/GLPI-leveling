@@ -287,6 +287,7 @@ def jouer_action(conn, combat_id: int, joueur_id: int, action_id: str) -> dict:
         """, (nouveau_statut, prochain, new_pv_att, new_pv_def, nouveau_log, combat_id))
 
         if nouveau_statut == "termine":
+            # Refetch avant tout UPDATE points_combat — valeurs Elo pré-combat requises
             vainqueur    = _get_joueur(cur, vainqueur_id)
             perdant_data = cible if vainqueur_id == joueur_id else attaqueur
 

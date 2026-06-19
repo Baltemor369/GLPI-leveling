@@ -29,6 +29,7 @@ def make_joueur(**overrides):
         "agilite_vit": 10,
         "esprit_res": 10,
         "or_monnaie": 1000,
+        "points_combat": 1000,
     }
     base.update(overrides)
     return base
@@ -483,3 +484,61 @@ class TestJouerActionDamage:
         assert gold_update, "winner should receive a gold reward"
         assert gold_update[0][1][0] == ce.OR_VICTOIRE_BASE  # mise 0 -> base only
         assert conn.committed == 1
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# _elo_delta  (pure function, no DB)
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestEloDelta:
+    """Combat points gained by the winner, Elo formula with K=32.
+
+    delta = max(1, round(32 * (1 - 1 / (1 + 10 ** ((pc_perdant - pc_vainqueur) / 400)))))
+
+    All expected values below are the exact results of that formula
+    (Python's ``round`` uses banker's rounding, round-half-to-even).
+    """
+
+    def test_equal_ratings_give_half_K(self):
+        # pc_perdant - pc_vainqueur = 0 -> expected = 0.5 -> 32 * 0.5 = 16.0
+        assert ce._elo_delta(1000, 1000) == 16
+
+    def test_stronger_winner_gains_little(self):
+        # Favorite (1500) beats weaker (1000):
+        # 10**(500/400) = 17.78279..., delta_raw = 32 * 0.0532403 = 1.7037 -> 2
+        assert ce._elo_delta(1500, 1000) == 2
+
+    def test_weaker_winner_gains_a_lot(self):
+        # Underdog (500) beats stronger (1000):
+        # 10**(-500/400) = 0.0562341, delta_raw = 32 * 0.946760 = 30.2963 -> 30
+        assert ce._elo_delta(500, 1000) == 30
+
+    def test_extreme_favorite_floored_to_one(self):
+        # Huge favorite (2000) beats 1000:
+        # 10**(-1000/400) = 0.00316228, delta_raw = 0.10087 -> round 0 -> max(1, 0)
+        assert ce._elo_delta(2000, 1000) == 1
+
+    def test_extreme_underdog_gains_near_full_K(self):
+        # Huge underdog (0) beats 1000:
+        # 10**(1000/400) = 316.2278, delta_raw = 32 * 0.996848 = 31.8991 -> 32
+        assert ce._elo_delta(0, 1000) == 32
+
+    def test_minimum_is_one_even_for_overwhelming_favorite(self):
+        # delta_raw rounds to 0 here, but the floor guarantees at least 1 PC.
+        assert ce._elo_delta(100000, 1) == 1
+        assert ce._elo_delta(100000, 1) >= 1
+
+    def test_favorite_never_gains_more_than_an_even_match(self):
+        # Monotonic sanity check across the cases: the larger the winner's
+        # advantage, the smaller the reward (and vice-versa for an underdog).
+        underdog = ce._elo_delta(500, 1000)
+        even = ce._elo_delta(1000, 1000)
+        favorite = ce._elo_delta(1500, 1000)
+        assert underdog > even > favorite
+
+    def test_delta_is_always_a_positive_int(self):
+        for v, p in [(1000, 1000), (1500, 1000), (500, 1000),
+                     (2000, 1000), (0, 1000), (100000, 1), (1, 100000)]:
+            d = ce._elo_delta(v, p)
+            assert isinstance(d, int)
+            assert d >= 1
