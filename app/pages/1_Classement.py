@@ -20,7 +20,15 @@ render_sidebar()
 st.markdown("# &#x1F3C6; Classement des Aventuriers")
 st.markdown("---")
 
-joueurs = db.tous_les_joueurs()
+try:
+    joueurs = db.tous_les_joueurs()
+except Exception:
+    st.error(
+        "⚠️ Impossible de charger le classement (base de données indisponible ou migration en attente). "
+        "Si la BDD est accessible : `docker compose up -d --build worker`"
+    )
+    st.stop()
+
 if not joueurs:
     st.warning("Aucun joueur en base.")
     st.stop()
@@ -29,7 +37,7 @@ if not joueurs:
 mon_rang = next((i + 1 for i, j in enumerate(joueurs) if j["id"] == joueur_id), None)
 if mon_rang:
     st.markdown(
-        f"<div style='text-align:right;color:#c9a84c;font-size:0.85rem;margin-top:-12px;margin-bottom:12px'>"
+        f"<div style='text-align:right;color:var(--or);font-size:0.85rem;margin-top:-12px;margin-bottom:12px'>"
         f"Votre position : <strong>#{mon_rang}</strong> sur {len(joueurs)} aventuriers</div>",
         unsafe_allow_html=True,
     )
@@ -43,13 +51,13 @@ for rang, j in enumerate(joueurs, start=1):
     username_safe = html.escape(j["username"])
 
     me_badge = (
-        " <span style='background:#c9a84c;color:#1a0d00;"
+        " <span style='background:var(--or);color:#1a0d00;"
         "font-size:0.6rem;padding:1px 5px;border-radius:3px;"
         "font-weight:bold;vertical-align:middle'>VOUS</span>"
         if est_moi else ""
     )
-    name_color = "color:#c9a84c;font-weight:bold" if est_moi else ""
-    hr_color   = "#c9a84c" if est_moi else "#3d2314"
+    name_color = "color:var(--or);font-weight:bold" if est_moi else ""
+    hr_color   = "var(--or)" if est_moi else "var(--brun2)"
 
     col1, col2, col3, col4, col5, col6 = st.columns([0.5, 2.5, 1, 1.5, 1, 1.5])
     with col1:
@@ -67,7 +75,7 @@ for rang, j in enumerate(joueurs, start=1):
         st.markdown(f"**Niv. {j['level']}**")
     with col4:
         st.markdown(
-            f"<span style='color:#c9a84c'>⭐ {j['xp']} XP</span>",
+            f"<span style='color:var(--or)'>⭐ {j['xp']} XP</span>",
             unsafe_allow_html=True,
         )
     with col5:

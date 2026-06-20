@@ -104,8 +104,15 @@ def _decode_jwt(token: str) -> dict:
 
 # ── Login GLPI ──────────────────────────────────────────────────────────────
 
-def login_glpi(username: str, password: str) -> dict | None:
-    """Authentification OAuth2 GLPI. Retourne {"glpi_id", "username"} ou None."""
+REQUEST_TIMEOUT_SECONDS = 10
+
+
+def _request_access_token(username: str, password: str) -> str | None:
+    """Échange des identifiants contre un access_token OAuth2 (grant_type=password).
+
+    Toute exception réseau ou HTTP non-200 est silencieusement avalée : retourne None
+    plutôt que de propager l'erreur à l'appelant.
+    """
     try:
         resp = requests.post(
             TOKEN_URL,
@@ -117,29 +124,65 @@ def login_glpi(username: str, password: str) -> dict | None:
                 "password":      password,
                 "scope":         "api",
             },
-            timeout=10,
+            timeout=REQUEST_TIMEOUT_SECONDS,
         )
     except Exception:
         return None
 
     if resp.status_code != 200:
         return None
+    return resp.json().get("access_token")
 
-    token = resp.json().get("access_token")
+
+def _glpi_id_from_token(token: str) -> int | None:
+    """Extrait l'identifiant utilisateur GLPI depuis le payload JWT (décodage local, sans vérification de signature).
+
+    Inspecte successivement les claims "sub", "user_id", puis "id". Retourne None si aucun
+    n'est présent ou si la valeur ne peut pas être convertie en entier.
+    """
+    payload = _decode_jwt(token)
+    sub = payload.get("sub") or payload.get("user_id") or payload.get("id")
+    if sub is None:
+        return None
+    try:
+        return int(sub)
+    except (ValueError, TypeError):
+        return None
+
+
+def _glpi_id_from_username(username: str) -> dict | None:
+    """Fallback : retrouve la ligne joueur complète par username (comparaison insensible à la casse).
+
+    Utilisé quand le JWT ne contient pas l'identifiant numérique attendu. Toute exception
+    BDD est avalée : retourne None pour laisser login_glpi continuer sans plantage.
+    """
+    try:
+        joueurs = db.tous_les_joueurs()
+    except Exception:
+        return None
+    return next(
+        (j for j in joueurs if j["username"].lower() == username.lower()),
+        None,
+    )
+
+
+def login_glpi(username: str, password: str) -> dict | None:
+    """Authentifie un utilisateur contre l'API OAuth2 GLPI.
+
+    Retourne {"glpi_id": int, "username": str} si l'authentification réussit.
+    Retourne {"glpi_id": None, "username": str} si les identifiants sont valides mais
+    qu'aucun joueur correspondant n'existe encore en BDD (premier login sans ticket assigné).
+    Retourne None si les identifiants GLPI sont incorrects ou si le serveur est injoignable.
+    """
+    token = _request_access_token(username, password)
     if not token:
         return None
 
-    payload = _decode_jwt(token)
-    sub = payload.get("sub") or payload.get("user_id") or payload.get("id")
-    if sub is not None:
-        try:
-            return {"glpi_id": int(sub), "username": username}
-        except (ValueError, TypeError):
-            pass
+    glpi_id = _glpi_id_from_token(token)
+    if glpi_id is not None:
+        return {"glpi_id": glpi_id, "username": username}
 
-    # Fallback : chercher par username dans joueurs
-    joueurs = db.tous_les_joueurs()
-    match = next((j for j in joueurs if j["username"].lower() == username.lower()), None)
+    match = _glpi_id_from_username(username)
     if match:
         return {"glpi_id": match["id"], "username": match["username"]}
 

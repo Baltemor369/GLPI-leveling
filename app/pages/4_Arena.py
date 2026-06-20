@@ -10,7 +10,7 @@ import streamlit as st
 import db_queries as db
 import style
 from auth import require_login, render_sidebar
-from db import get_conn, init_db
+from db import get_conn
 from combat_engine import (
     ACTIONS, creer_combat, accepter_combat,
     jouer_action, get_combat, get_combats_joueur,
@@ -22,7 +22,6 @@ import psycopg2.extras
 st.set_page_config(page_title="Arène — GlpiLeveling", page_icon="⚔️", layout="wide")
 style.inject(st)
 
-init_db()
 joueur_id = require_login()
 render_sidebar()
 
@@ -34,27 +33,45 @@ def stats_joueur(conn, jid):
     return j, eq, pv_max(j, eq), force_effective(j, eq), resistance_effective(j, eq), agilite_effective(j, eq)
 
 
+def afficher_fin_et_bouton_lobby(message, lobby_key, niveau="info"):
+    """Affiche un message d'état final puis un bouton de retour au lobby.
+
+    Utilisé par les fragments quand le combat/défi n'est plus dans un état jouable.
+    `niveau` accepte "success" (st.success) ou toute autre valeur (st.info).
+    `lobby_key` doit être unique par site d'appel pour éviter les conflits de clés
+    Streamlit entre fragments distincts.
+    Le `st.rerun(scope="app")` n'est déclenché que si l'utilisateur clique sur le
+    bouton — il n'est pas appelé automatiquement à l'affichage du fragment.
+    """
+    (st.success if niveau == "success" else st.info)(message)
+    if st.button("↩ Retourner au lobby", use_container_width=True, key=lobby_key):
+        st.rerun(scope="app")
+
+
 # ══════════════════════════════════════════════════════════════════════════
-# FRAGMENT : COMBAT EN COURS (auto-refresh 1s)
+# FRAGMENT : COMBAT EN COURS (auto-refresh 3s)
 # ══════════════════════════════════════════════════════════════════════════
-@st.fragment(run_every=1)
+@st.fragment(run_every=3)
 def vue_combat_actif(combat_id, joueur_id):
     conn = get_conn()
-    c = get_combat(conn, combat_id)
-
-    if not c or c["statut"] != "en_cours":
+    try:
+        c = get_combat(conn, combat_id)
+        if not c or c["statut"] != "en_cours":
+            if c and c["statut"] == "termine":
+                derniere = c["log_combat"].strip().split("\n")[-1] if c["log_combat"] else "Combat terminé."
+                afficher_fin_et_bouton_lobby(derniere, "btn_lobby_fin", niveau="success")
+            else:
+                afficher_fin_et_bouton_lobby("Ce combat n'est plus disponible.", "btn_lobby_fin")
+            return
+        att_j, att_eq, att_pv_max, att_for, att_res, att_agi = stats_joueur(conn, c["attaquant_id"])
+        def_j, def_eq, def_pv_max, def_for, def_res, def_agi = stats_joueur(conn, c["defenseur_id"])
+    finally:
         conn.close()
-        st.rerun(scope="app")
-        return
-
-    att_j, att_eq, att_pv_max, att_for, att_res, att_agi = stats_joueur(conn, c["attaquant_id"])
-    def_j, def_eq, def_pv_max, def_for, def_res, def_agi = stats_joueur(conn, c["defenseur_id"])
-    conn.close()
 
     pv_att = c["pv_attaquant"]
     pv_def = c["pv_defenseur"]
-    pct_att = max(0, int(pv_att / att_pv_max * 100))
-    pct_def = max(0, int(pv_def / def_pv_max * 100))
+    pct_att = max(0, int(pv_att / max(1, att_pv_max) * 100))
+    pct_def = max(0, int(pv_def / max(1, def_pv_max) * 100))
 
     c_att_color = "#4caf50" if pct_att > 50 else "#ff9800" if pct_att > 25 else "#f44336"
     c_def_color = "#4caf50" if pct_def > 50 else "#ff9800" if pct_def > 25 else "#f44336"
@@ -155,49 +172,54 @@ def vue_combat_actif(combat_id, joueur_id):
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# FRAGMENT : DÉFI EN ATTENTE (auto-refresh 2s)
+# FRAGMENT : DÉFI EN ATTENTE (auto-refresh 3s)
 # ══════════════════════════════════════════════════════════════════════════
-@st.fragment(run_every=2)
+@st.fragment(run_every=3)
 def vue_defi_attente(combat_id, joueur_id):
     conn = get_conn()
-    combats = get_combats_joueur(conn, joueur_id)
-    c = next((x for x in combats if x["id"] == combat_id), None)
+    try:
+        combats = get_combats_joueur(conn, joueur_id)
+        c = next((x for x in combats if x["id"] == combat_id), None)
 
-    if not c or c["statut"] != "en_attente":
-        conn.close()
-        st.rerun(scope="app")
-        return
+        if not c or c["statut"] != "en_attente":
+            if c and c["statut"] == "en_cours":
+                afficher_fin_et_bouton_lobby(
+                    "Le défi a été accepté ! Le combat est en cours.", "btn_lobby_defi", niveau="success"
+                )
+            else:
+                afficher_fin_et_bouton_lobby(
+                    "Ce défi a expiré ou n'est plus disponible.", "btn_lobby_defi"
+                )
+            return
 
-    est_defenseur = (c["defenseur_id"] == joueur_id)
+        est_defenseur = (c["defenseur_id"] == joueur_id)
 
-    if est_defenseur:
-        mise_info = f" — Mise : **{c['mise']} or** chacun (pot : {c['mise'] * 2} or)" if c["mise"] > 0 else ""
-        st.markdown(f"# &#x2694; Défi reçu de **{c['nom_attaquant']}** !")
-        st.markdown(f"*{c['nom_attaquant']} te défie en combat{mise_info}. Acceptes-tu ?*")
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Accepter le combat", use_container_width=True):
-                err = accepter_combat(conn, c["id"], joueur_id)
-                conn.close()
-                if err:
-                    st.error(err)
-                else:
+        if est_defenseur:
+            mise_info = f" — Mise : **{c['mise']} or** chacun (pot : {c['mise'] * 2} or)" if c["mise"] > 0 else ""
+            st.markdown(f"# &#x2694; Défi reçu de **{c['nom_attaquant']}** !")
+            st.markdown(f"*{c['nom_attaquant']} te défie en combat{mise_info}. Acceptes-tu ?*")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Accepter le combat", use_container_width=True):
+                    err = accepter_combat(conn, c["id"], joueur_id)
+                    if err:
+                        st.error(err)
+                    else:
+                        st.rerun(scope="app")
+            with col2:
+                if st.button("Refuser", use_container_width=True):
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            "DELETE FROM combats WHERE id = %s AND defenseur_id = %s",
+                            (c["id"], joueur_id),
+                        )
+                    conn.commit()
                     st.rerun(scope="app")
-        with col2:
-            if st.button("Refuser", use_container_width=True):
-                with conn.cursor() as cur:
-                    cur.execute(
-                        "DELETE FROM combats WHERE id = %s AND defenseur_id = %s",
-                        (c["id"], joueur_id),
-                    )
-                conn.commit()
-                conn.close()
-                st.rerun(scope="app")
-    else:
-        st.markdown(f"# &#x23F3; Défi envoyé à **{c['nom_defenseur']}**")
-        st.info("En attente de sa réponse...")
-
-    conn.close()
+        else:
+            st.markdown(f"# &#x23F3; Défi envoyé à **{c['nom_defenseur']}**")
+            st.info("En attente de sa réponse...")
+    finally:
+        conn.close()
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -251,14 +273,21 @@ else:
         st.markdown("---")
 
     st.markdown("### Choisir un adversaire")
-    adversaires = [j for j in db.tous_les_joueurs() if j["id"] != joueur_id]
+    try:
+        tous_joueurs = db.tous_les_joueurs()
+    except Exception:
+        st.error("⚠️ Impossible de charger les joueurs (base de données indisponible ou migration en attente). Si la BDD est accessible : `docker compose up -d --build worker`")
+        st.stop()
+
+    adversaires    = [j for j in tous_joueurs if j["id"] != joueur_id]
+    moi            = next((j for j in tous_joueurs if j["id"] == joueur_id), None)
+    mon_or         = moi["or_monnaie"] if moi else 0
 
     if not adversaires:
         st.warning("Aucun autre aventurier disponible pour l'instant.")
     else:
-        joueur_courant = next(j for j in db.tous_les_joueurs() if j["id"] == joueur_id)
         mise = st.number_input(
-            f"Mise (or) — ton trésor : {joueur_courant['or_monnaie']} or",
+            f"Mise (or) — ton trésor : {mon_or} or",
             min_value=0, value=0, step=10,
             help="Les deux joueurs misent ce montant. Le vainqueur empoche le pot entier."
         )
