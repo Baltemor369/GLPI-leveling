@@ -373,6 +373,35 @@ class TestDepenserStat:
         assert resp.headers["Location"] in ("/", "http://localhost/")
 
 
+# ── /classement ───────────────────────────────────────────────────────────────
+
+JOUEURS_MOCK = [
+    {"id": 1, "username": "alice", "level": 5, "xp": 800, "victoires": 3, "points_combat": 1200},
+    {"id": 2, "username": "bob",   "level": 3, "xp": 300, "victoires": 1, "points_combat": 950},
+]
+
+
+class TestClassement:
+    def test_default_tab_xp_returns_200(self, auth_client):
+        with patch("web.routes.classement.queries.tous_les_joueurs", return_value=JOUEURS_MOCK):
+            resp = auth_client.get("/classement")
+        assert resp.status_code == 200
+        assert b"XP" in resp.data
+
+    def test_tab_pc_calls_pc_query(self, auth_client):
+        with patch("web.routes.classement.queries.tous_les_joueurs_par_pc", return_value=JOUEURS_MOCK) as mock_pc:
+            resp = auth_client.get("/classement?tab=pc")
+        assert resp.status_code == 200
+        mock_pc.assert_called_once()
+        assert "Points de Combat".encode() in resp.data
+
+    def test_invalid_tab_falls_back_to_xp(self, auth_client):
+        with patch("web.routes.classement.queries.tous_les_joueurs", return_value=JOUEURS_MOCK) as mock_xp:
+            resp = auth_client.get("/classement?tab=hack")
+        assert resp.status_code == 200
+        mock_xp.assert_called_once()
+
+
 # ── /expedition ───────────────────────────────────────────────────────────────
 
 class TestExpedition:
