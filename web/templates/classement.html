@@ -4,6 +4,20 @@
 {% block content %}
 <h1>🏆 Classement des Aventuriers</h1>
 
+<!-- Onglets -->
+<div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:2px solid rgba(138,106,26,0.3);padding-bottom:0">
+  <a href="{{ url_for('classement.index', tab='xp') }}"
+     style="padding:8px 20px;text-decoration:none;border-radius:6px 6px 0 0;font-weight:bold;
+            {% if tab == 'xp' %}background:var(--or);color:#1a1006{% else %}color:var(--gris);background:rgba(138,106,26,0.1){% endif %}">
+    ⭐ XP
+  </a>
+  <a href="{{ url_for('classement.index', tab='pc') }}"
+     style="padding:8px 20px;text-decoration:none;border-radius:6px 6px 0 0;font-weight:bold;
+            {% if tab == 'pc' %}background:var(--or);color:#1a1006{% else %}color:var(--gris);background:rgba(138,106,26,0.1){% endif %}">
+    ⚔️ Points de Combat
+  </a>
+</div>
+
 {% if mon_rang %}
 <div style="text-align:right;color:var(--or);font-size:0.85rem;margin-top:-8px;margin-bottom:14px">
   Votre position : <strong>#{{ mon_rang }}</strong> sur {{ joueurs|length }} aventuriers
@@ -19,11 +33,6 @@
 {% for j in joueurs %}
 {% set rang = loop.index %}
 {% set est_moi = (j.id == joueur_id) %}
-{% set xp_prec = xp_requis_pour_niveau(j.level) %}
-{% set xp_suiv = xp_requis_pour_niveau(j.level + 1) %}
-{% set denom = [1, xp_suiv - xp_prec] | max %}
-{% set raw_pct = ((j.xp - xp_prec) / denom * 100) | int %}
-{% set pct = [100, raw_pct] | min %}
 
 <div class="rank-row {% if est_moi %}me{% endif %}">
   <div class="rank-badge">{{ medailles.get(rang, '#' ~ rang) }}</div>
@@ -35,15 +44,35 @@
 
   <div class="rank-level" style="color:var(--gris)">Niv. {{ j.level }}</div>
 
+  {% if tab == 'pc' %}
+
+  <div class="rank-xp" style="color:#6ab0e8">🏆 {{ j.points_combat }} PC</div>
+  <div class="rank-vic">⚔️ {{ j.victoires }} vic.</div>
+  <div class="rank-bar" style="min-width:80px">
+    <div class="xp-bar-bg" style="height:12px;margin:0;background:rgba(106,176,232,0.15)">
+      {% set max_pc = joueurs[0].points_combat %}
+      {% set pct_pc = (j.points_combat / [1, max_pc] | max * 100) | int %}
+      <div class="xp-bar-fill" style="width:{{ [100, pct_pc] | min }}%;background:#6ab0e8"></div>
+    </div>
+  </div>
+
+  {% else %}
+
+  {% set xp_prec = xp_requis_pour_niveau(j.level) %}
+  {% set xp_suiv = xp_requis_pour_niveau(j.level + 1) %}
+  {% set denom = [1, xp_suiv - xp_prec] | max %}
+  {% set raw_pct = ((j.xp - xp_prec) / denom * 100) | int %}
+  {% set pct = [100, raw_pct] | min %}
+
   <div class="rank-xp">⭐ {{ j.xp }} XP</div>
-
   <div class="rank-vic">⚔️ {{ j.victoires }}</div>
-
   <div class="rank-bar" style="min-width:80px">
     <div class="xp-bar-bg" style="height:12px;margin:0">
       <div class="xp-bar-fill" style="width:{{ pct }}%"></div>
     </div>
   </div>
+
+  {% endif %}
 </div>
 {% endfor %}
 

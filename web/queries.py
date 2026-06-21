@@ -27,6 +27,23 @@ def tous_les_joueurs() -> list[dict]:
             return [dict(r) for r in cur.fetchall()]
 
 
+def tous_les_joueurs_par_pc() -> list[dict]:
+    """Return all players ordered by points_combat descending."""
+    with _conn() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("""
+                SELECT j.id, j.username, j.level, j.xp, j.or_monnaie,
+                       j.force_p, j.constitution_pv, j.agilite_vit, j.esprit_res,
+                       j.points_a_attribuer, j.points_combat,
+                       COUNT(c.id) AS victoires
+                FROM joueurs j
+                LEFT JOIN combats c ON c.vainqueur_id = j.id AND c.statut = 'termine'
+                GROUP BY j.id
+                ORDER BY j.points_combat DESC
+            """)
+            return [dict(r) for r in cur.fetchall()]
+
+
 def get_joueur(joueur_id: int) -> dict | None:
     """Return a single player row by primary key, or None if not found."""
     with _conn() as conn:
