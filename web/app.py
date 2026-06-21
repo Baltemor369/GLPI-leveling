@@ -1,6 +1,6 @@
 import os
 from flask import Flask, session
-from flask_wtf.csrf import CSRFProtect
+from .extensions import csrf, limiter
 from .routes.auth import auth_bp
 from .routes.aventurier import aventurier_bp
 from .routes.classement import classement_bp
@@ -11,8 +11,17 @@ from .routes.badges import badges_bp
 from .routes.expedition import expedition_bp
 from . import queries
 
-
-csrf = CSRFProtect()
+_CSP = (
+    "default-src 'self'; "
+    "script-src 'self' https://unpkg.com; "
+    "style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data:; "
+    "font-src 'self'; "
+    "connect-src 'self'; "
+    "frame-ancestors 'none'; "
+    "base-uri 'self'; "
+    "form-action 'self';"
+)
 
 
 def create_app():
@@ -21,6 +30,7 @@ def create_app():
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     csrf.init_app(app)
+    limiter.init_app(app)
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(aventurier_bp)
@@ -40,6 +50,14 @@ def create_app():
             except Exception:
                 pass
         return {"sidebar_joueur": None}
+
+    @app.after_request
+    def security_headers(response):
+        response.headers["X-Frame-Options"]         = "DENY"
+        response.headers["X-Content-Type-Options"]  = "nosniff"
+        response.headers["Referrer-Policy"]         = "strict-origin-when-cross-origin"
+        response.headers["Content-Security-Policy"] = _CSP
+        return response
 
     return app
 

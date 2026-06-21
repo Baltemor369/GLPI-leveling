@@ -1,10 +1,12 @@
 from flask import Blueprint, session, redirect, url_for, request, render_template, flash
 from ..auth import login_glpi
+from ..extensions import limiter
 
 auth_bp = Blueprint("auth", __name__)
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("10 per minute", methods=["POST"])
 def login():
     if "joueur_id" in session:
         return redirect(url_for("aventurier.index"))
