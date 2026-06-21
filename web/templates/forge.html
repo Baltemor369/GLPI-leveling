@@ -37,6 +37,7 @@
       {% endif %}
     </div>
     <form method="post" action="{{ url_for('forge.acheter') }}" style="margin-top:6px">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="nom" value="{{ item.nom }}">
       <button type="submit" class="btn btn-block btn-sm"
               {% if not item.peut_acheter %}disabled{% endif %}>
@@ -64,6 +65,7 @@
   <div class="inv-btn">
     {% if not item.equipe %}
     <form method="post" action="{{ url_for('forge.equiper', equip_id=item.id) }}" style="display:inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn btn-sm">Équiper</button>
     </form>
     {% endif %}
@@ -71,6 +73,7 @@
   <div class="inv-upg">
     {% if item.amelioration < 20 %}
     <form method="post" action="{{ url_for('forge.ameliorer', equip_id=item.id) }}" style="display:inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn btn-sm"
               {% if not item.peut_ameliorer %}disabled{% endif %}>
         ⬆ +{{ item.amelioration + 1 }} (💰{{ item.cout_upgrade }}{% if item.bois_remise %} 🌲-30%{% endif %})

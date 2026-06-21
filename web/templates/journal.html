@@ -44,7 +44,7 @@
   <span style="float:right;color:#6b5a4e;font-size:0.82rem">
     {% if t.date_traitement %}{{ t.date_traitement.strftime('%d/%m/%Y %H:%M') }}{% else %}—{% endif %}
   </span>
-  <div class="ticket-meta">{{ t.analyse_llm or '' | e }}</div>
+  <div class="ticket-meta">{{ (t.analyse_llm or '') | e }}</div>
 </div>
 {% endfor %}
 

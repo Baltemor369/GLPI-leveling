@@ -1,5 +1,6 @@
 import os
 from flask import Flask, session
+from flask_wtf.csrf import CSRFProtect
 from .routes.auth import auth_bp
 from .routes.aventurier import aventurier_bp
 from .routes.classement import classement_bp
@@ -11,11 +12,15 @@ from .routes.expedition import expedition_bp
 from . import queries
 
 
+csrf = CSRFProtect()
+
+
 def create_app():
     app = Flask(__name__)
     app.secret_key = os.environ["SECRET_KEY"]
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    csrf.init_app(app)
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(aventurier_bp)

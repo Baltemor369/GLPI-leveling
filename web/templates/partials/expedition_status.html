@@ -8,6 +8,7 @@
 {% if status.statut == 'aucune' %}
 <h3>Aucune expédition en cours</h3>
 <form method="post" action="{{ url_for('expedition.lancer') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <button type="submit" class="btn" style="margin-top:8px">🗺️ Partir en expédition (2h)</button>
 </form>
 
@@ -15,6 +16,7 @@
 <h3>✅ Expédition terminée !</h3>
 <p style="margin-bottom:12px">Votre équipe est de retour. Réclamez votre butin !</p>
 <form method="post" action="{{ url_for('expedition.reclamer') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <button type="submit" class="btn">🎁 Réclamer les récompenses</button>
 </form>
 

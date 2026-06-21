@@ -23,6 +23,7 @@
     {% endwith %}
 
     <form method="post" action="{{ url_for('auth.login') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="form-group">
         <label class="login-label" for="username">Identifiant GLPI</label>
         <input class="form-input" type="text" id="username" name="username"

@@ -15,6 +15,7 @@ REQUEST_TIMEOUT = 10
 
 
 def login_required(f):
+    """Flask decorator that redirects unauthenticated requests to the login page."""
     @wraps(f)
     def decorated(*args, **kwargs):
         if "joueur_id" not in session:
@@ -24,6 +25,7 @@ def login_required(f):
 
 
 def _request_access_token(username: str, password: str) -> str | None:
+    """Exchange GLPI credentials for an OAuth2 access token; return None on failure."""
     try:
         resp = requests.post(
             TOKEN_URL,
@@ -45,6 +47,7 @@ def _request_access_token(username: str, password: str) -> str | None:
 
 
 def _glpi_id_from_token(token: str) -> int | None:
+    """Decode the JWT payload and extract the GLPI user ID; return None if absent or malformed."""
     try:
         payload = token.split(".")[1]
         payload += "=" * (4 - len(payload) % 4)
@@ -61,6 +64,7 @@ def _glpi_id_from_token(token: str) -> int | None:
 
 
 def _glpi_id_from_username(username: str) -> dict | None:
+    """Fallback: look up the player row by username when the JWT carries no usable ID."""
     try:
         joueurs = queries.tous_les_joueurs()
     except Exception:

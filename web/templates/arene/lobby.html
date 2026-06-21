@@ -24,6 +24,7 @@
 {% else %}
 
 <form method="post" action="{{ url_for('arene.defier') }}" id="defi-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="form-group">
     <label class="form-label" for="mise-input">
       Mise (or) — ton trésor : {{ moi.or_monnaie if moi else 0 }} or

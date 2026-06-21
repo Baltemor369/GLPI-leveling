@@ -14,9 +14,11 @@
 </p>
 <div style="display:flex;gap:12px">
   <form method="post" action="{{ url_for('arene.accepter', combat_id=c.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="btn">✅ Accepter le combat</button>
   </form>
   <form method="post" action="{{ url_for('arene.refuser', combat_id=c.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="btn btn-secondary">❌ Refuser</button>
   </form>
 </div>

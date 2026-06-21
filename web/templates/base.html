@@ -6,6 +6,14 @@
   <title>{% block title %}GlpiLeveling{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <script src="https://unpkg.com/htmx.org@2.0.4" crossorigin="anonymous"></script>
+  <script>
+    /* Injecte le token CSRF sur tous les hx-post/hx-put/hx-delete */
+    document.addEventListener('htmx:configRequest', function(evt) {
+      if (['post','put','patch','delete'].includes(evt.detail.verb)) {
+        evt.detail.headers['X-CSRFToken'] = '{{ csrf_token() }}';
+      }
+    });
+  </script>
   {% block head %}{% endblock %}
 </head>
 <body>

@@ -77,13 +77,19 @@ def _expedition_status_data(joueur_id: int) -> dict:
         if now >= fin:
             return {"statut": "terminee", "expedition": expedition}
 
-        reste = fin - now
-        h = int(reste.total_seconds() // 3600)
-        m = int((reste.total_seconds() % 3600) // 60)
-        s = int(reste.total_seconds() % 60)
-        pct = max(0.0, 1 - reste.total_seconds() / (DUREE_HEURES * 3600))
+        secondes_restantes = (fin - now).total_seconds()
+        heures   = int(secondes_restantes // 3600)
+        minutes  = int((secondes_restantes % 3600) // 60)
+        secondes = int(secondes_restantes % 60)
+        pct = max(0.0, 1 - secondes_restantes / (DUREE_HEURES * 3600))
         retour = fin.astimezone().strftime("%H:%M")
-        return {"statut": "en_cours", "timer": f"{h:02d}:{m:02d}:{s:02d}", "pct": pct * 100, "retour": retour, "expedition": expedition}
+        return {
+            "statut": "en_cours",
+            "timer": f"{heures:02d}:{minutes:02d}:{secondes:02d}",
+            "pct": pct * 100,
+            "retour": retour,
+            "expedition": expedition,
+        }
     finally:
         conn.close()
 

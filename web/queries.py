@@ -6,10 +6,12 @@ from config import DATABASE_URL
 
 
 def _conn():
+    """Open a new psycopg2 connection from DATABASE_URL."""
     return psycopg2.connect(DATABASE_URL)
 
 
 def tous_les_joueurs() -> list[dict]:
+    """Return all players ordered by XP descending, including their win count."""
     with _conn() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute("""
@@ -26,6 +28,7 @@ def tous_les_joueurs() -> list[dict]:
 
 
 def get_joueur(joueur_id: int) -> dict | None:
+    """Return a single player row by primary key, or None if not found."""
     with _conn() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute("SELECT * FROM joueurs WHERE id = %s", (joueur_id,))
@@ -34,6 +37,7 @@ def get_joueur(joueur_id: int) -> dict | None:
 
 
 def get_equipements(joueur_id: int) -> list[dict]:
+    """Return the player's equipment sorted by equipped status then insertion order."""
     with _conn() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
@@ -44,6 +48,7 @@ def get_equipements(joueur_id: int) -> list[dict]:
 
 
 def get_tickets_joueur(joueur_id: int, limit: int = 20) -> list[dict]:
+    """Return the most recent processed tickets for one player (default 20)."""
     with _conn() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute("""
@@ -57,6 +62,7 @@ def get_tickets_joueur(joueur_id: int, limit: int = 20) -> list[dict]:
 
 
 def get_tickets_tous(limit: int = 50) -> list[dict]:
+    """Return the most recent processed tickets across all players (default 50)."""
     with _conn() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute("""
@@ -71,6 +77,11 @@ def get_tickets_tous(limit: int = 50) -> list[dict]:
 
 
 def depenser_point_stat(joueur_id: int, stat: str) -> bool:
+    """Spend one unallocated stat point on the given stat; return False if none available.
+
+    Raises ValueError for an invalid stat name to prevent SQL injection via the
+    column name, which cannot be parameterised with %s.
+    """
     colonnes_valides = {"force_p", "constitution_pv", "agilite_vit", "esprit_res"}
     if stat not in colonnes_valides:
         raise ValueError(f"Stat invalide : {stat}")

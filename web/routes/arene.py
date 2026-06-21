@@ -1,4 +1,3 @@
-import html as html_mod
 from flask import (
     Blueprint, session, render_template, redirect, url_for,
     request, flash, make_response,
@@ -64,14 +63,33 @@ def _victoire_msg(c, joueur_id):
     return None
 
 
-def _render_fin(c, joueur_id, nouveaux_badges=None):
-    derniere = c["log_combat"].strip().split("\n")[-1] if c.get("log_combat") else "Combat terminé."
+# HTMX swaps the combat fragment on a 286 (stop-polling) response.
+HTMX_STOP_POLLING = 286
+
+
+def _render_fin_message(message):
+    """Terminal combat fragment with a plain message and no badges/outcome."""
     return render_template(
         "partials/combat_fin.html",
-        message=derniere,
+        message=message,
+        victoire=None,
+        nouveaux_badges=[],
+    ), HTMX_STOP_POLLING
+
+
+def _render_attente_fin(message):
+    """Terminal waiting-screen fragment that stops the HTMX polling."""
+    return render_template("partials/attente_fin.html", message=message), HTMX_STOP_POLLING
+
+
+def _render_fin(c, joueur_id, nouveaux_badges=None):
+    derniere_ligne = c["log_combat"].strip().split("\n")[-1] if c.get("log_combat") else "Combat terminé."
+    return render_template(
+        "partials/combat_fin.html",
+        message=derniere_ligne,
         victoire=_victoire_msg(c, joueur_id),
         nouveaux_badges=nouveaux_badges or [],
-    ), 286
+    ), HTMX_STOP_POLLING
 
 
 @arene_bp.route("/arene")
@@ -89,9 +107,9 @@ def index():
             return render_template("arene/combat.html", mode="combat", active="arene", **ctx)
 
         if c_attente:
-            est_def = c_attente["defenseur_id"] == joueur_id
+            est_defenseur = c_attente["defenseur_id"] == joueur_id
             return render_template("arene/attente.html", mode="attente", c=c_attente,
-                                   est_defenseur=est_def, active="arene")
+                                   est_defenseur=est_defenseur, active="arene")
 
         # Lobby
         try:
@@ -130,19 +148,19 @@ def combat_partial():
     joueur_id = session["joueur_id"]
 
     if combat_id is None:
-        return render_template("partials/combat_fin.html",
-                               message="Combat introuvable.", victoire=None,
-                               nouveaux_badges=[]), 286
+        return _render_fin_message("Combat introuvable.")
 
     conn = get_conn()
     try:
         c = get_combat(conn, combat_id)
-        if not c or c["statut"] != "en_cours":
-            if c and c["statut"] == "termine":
+        if not c:
+            return _render_fin_message("Combat introuvable.")
+        if joueur_id not in (c["attaquant_id"], c["defenseur_id"]):
+            return _render_fin_message("Accès refusé.")
+        if c["statut"] != "en_cours":
+            if c["statut"] == "termine":
                 return _render_fin(c, joueur_id)
-            return render_template("partials/combat_fin.html",
-                                   message="Ce combat n'est plus disponible.", victoire=None,
-                                   nouveaux_badges=[]), 286
+            return _render_fin_message("Ce combat n'est plus disponible.")
         ctx = _build_combat_ctx(conn, c, joueur_id)
     finally:
         conn.close()
@@ -157,27 +175,25 @@ def attente_partial():
     joueur_id = session["joueur_id"]
 
     if combat_id is None:
-        return render_template("partials/attente_fin.html",
-                               message="Défi introuvable."), 286
+        return _render_attente_fin("Défi introuvable.")
 
     conn = get_conn()
     try:
         combats = get_combats_joueur(conn, joueur_id)
-        c = next((x for x in combats if x["id"] == combat_id), None)
+        c = next((combat for combat in combats if combat["id"] == combat_id), None)
     finally:
         conn.close()
 
     if not c or c["statut"] == "termine":
-        return render_template("partials/attente_fin.html",
-                               message="Ce défi a expiré ou n'est plus disponible."), 286
+        return _render_attente_fin("Ce défi a expiré ou n'est plus disponible.")
 
     if c["statut"] == "en_cours":
         resp = make_response("", 200)
         resp.headers["HX-Redirect"] = url_for("arene.index")
         return resp
 
-    est_def = c["defenseur_id"] == joueur_id
-    return render_template("partials/attente_partial.html", c=c, est_defenseur=est_def)
+    est_defenseur = c["defenseur_id"] == joueur_id
+    return render_template("partials/attente_partial.html", c=c, est_defenseur=est_defenseur)
 
 
 @arene_bp.route("/arene/defier", methods=["POST"])
@@ -255,9 +271,7 @@ def action():
         if not c or c["statut"] != "en_cours":
             if c and c["statut"] == "termine":
                 return _render_fin(c, joueur_id, nouveaux_badges)
-            return render_template("partials/combat_fin.html",
-                                   message="Combat terminé.", victoire=None,
-                                   nouveaux_badges=[]), 286
+            return _render_fin_message("Combat terminé.")
 
         ctx = _build_combat_ctx(conn, c, joueur_id)
     finally:

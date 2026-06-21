@@ -35,6 +35,17 @@ STAT_LABELS = {"force_p": "Force", "esprit_res": "Résistance", "constitution_pv
 MAT_NOMS    = {"bois_chene": "🌲 Bois de Chêne", "minerai_fer": "⚙️ Minerai de Fer",
                "cristal_runique": "💎 Cristal Runique", "essence_neant": "✨ Essence du Néant"}
 
+# Améliorer un équipement coûte 60% du coût de base, croît avec le palier,
+# et bénéficie d'une remise de 30% si le joueur possède du bois de chêne.
+COUT_UPGRADE_RATIO = 0.6
+REMISE_BOIS        = 0.7
+AMELIORATION_MAX   = 20
+
+
+def cout_amelioration(cout_base: int, amelioration: int, a_bois: bool) -> int:
+    remise = REMISE_BOIS if a_bois else 1
+    return round(cout_base * (amelioration + 1) * COUT_UPGRADE_RATIO * remise)
+
 
 @forge_bp.route("/forge")
 @login_required
@@ -65,16 +76,16 @@ def index():
 
     inventaire = []
     for item in equipements:
-        amel     = item.get("amelioration", 0)
-        base     = item.get("cout_base", 50)
-        a_bois   = stock.get("bois_chene", 0) > 0
-        cout_upg = round(base * (amel + 1) * 0.6 * (0.7 if a_bois else 1))
+        amelioration = item.get("amelioration", 0)
+        cout_base    = item.get("cout_base", 50)
+        a_bois       = stock.get("bois_chene", 0) > 0
+        cout_upgrade = cout_amelioration(cout_base, amelioration, a_bois)
         inventaire.append({
             **item,
-            "stat_totale":    item["valeur_bonus"] + amel * 2,
+            "stat_totale":    item["valeur_bonus"] + amelioration * 2,
             "tier_color":     TIER_COLORS.get(item.get("tier", 1), "#7a6a55"),
-            "cout_upgrade":   cout_upg,
-            "peut_ameliorer": joueur["or_monnaie"] >= cout_upg and amel < 20,
+            "cout_upgrade":   cout_upgrade,
+            "peut_ameliorer": joueur["or_monnaie"] >= cout_upgrade and amelioration < AMELIORATION_MAX,
             "bois_remise":    a_bois,
         })
 
@@ -192,12 +203,12 @@ def ameliorer(equip_id):
                 (equip_id, joueur_id),
             )
             row = cur.fetchone()
-            if not row or row[0] >= 20:
+            if not row or row[0] >= AMELIORATION_MAX:
                 flash("Amélioration impossible.", "error")
                 return redirect(url_for("forge.index"))
 
-            amel, base = row
-            cout_upg = round(base * (amel + 1) * 0.6 * (0.7 if a_bois else 1))
+            amelioration, cout_base = row
+            cout_upgrade = cout_amelioration(cout_base, amelioration, a_bois)
 
             cur.execute(
                 "UPDATE equipements SET amelioration = amelioration + 1 WHERE id = %s",
@@ -206,7 +217,7 @@ def ameliorer(equip_id):
             cur.execute(
                 "UPDATE joueurs SET or_monnaie = or_monnaie - %s "
                 "WHERE id = %s AND or_monnaie >= %s RETURNING id",
-                (cout_upg, joueur_id, cout_upg),
+                (cout_upgrade, joueur_id, cout_upgrade),
             )
             if cur.fetchone() is None:
                 conn.rollback()
@@ -218,7 +229,7 @@ def ameliorer(equip_id):
                 consommer_materiaux(conn, joueur_id, {"bois_chene": 1})
 
         conn.commit()  # commit unique : amélioration + or + bois
-        flash(f"✅ Équipement amélioré à +{amel + 1} !", "success")
+        flash(f"✅ Équipement amélioré à +{amelioration + 1} !", "success")
     finally:
         conn.close()
     return redirect(url_for("forge.index"))

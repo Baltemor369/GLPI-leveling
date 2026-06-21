@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.4.1] — 2026-06-21
+
+### Sécurité
+- Protection CSRF via Flask-WTF : token dans tous les formulaires HTML + header `X-CSRFToken` injecté globalement sur tous les `hx-post` HTMX
+- Correction IDOR `/arene/combat-partial` : vérification ownership avant d'afficher le fragment de combat
+- Correction précédence Jinja2 : `{{ (t.analyse_llm or '') | e }}` dans journal.html et aventurier.html
+
+### Qualité
+- Refactoring arene.py : constante `HTMX_STOP_POLLING`, helpers `_render_fin_message`/`_render_attente_fin`, renommages explicites
+- Refactoring forge.py : constantes `COUT_UPGRADE_RATIO`, `REMISE_BOIS`, `AMELIORATION_MAX` + `cout_amelioration()`
+- Refactoring expedition.py : `secondes_restantes` en variable unique, noms `heures/minutes/secondes`
+- 41 nouveaux tests Flask (`tests/test_web_routes.py`) — total 107 tests
+- Docstrings `web/auth.py` et `web/queries.py`, README mis à jour (stack Flask, env, architecture)
+
 ## [1.4.0] — 2026-06-21
 
 ### Nouveautés

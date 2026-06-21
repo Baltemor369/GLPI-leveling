@@ -43,6 +43,7 @@
     </div>
     {% if joueur.points_a_attribuer > 0 %}
     <form method="post" action="{{ url_for('aventurier.depenser_stat') }}" style="margin-top:6px">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="stat" value="{{ key }}">
       <button type="submit" class="btn btn-block btn-sm">+ 1</button>
     </form>
@@ -90,7 +91,7 @@
   {% endif %}
   &nbsp;
   <span style="color:var(--or)">+{{ t.xp_gagne }} XP</span>
-  <div class="ticket-meta">{{ t.analyse_llm or '' }}</div>
+  <div class="ticket-meta">{{ (t.analyse_llm or '') | e }}</div>
 </div>
 {% endfor %}
 {% endif %}
