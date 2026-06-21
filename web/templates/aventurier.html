@@ -63,8 +63,10 @@
   <div class="stat-card">
     <div class="stat-label">{{ slot_label }}</div>
     {% if item %}
-    <div class="stat-value" style="font-size:1.05rem;margin:8px 0">{{ item.nom }}</div>
-    <div style="color:var(--or);font-size:0.9rem">+{{ item.valeur_bonus }} {{ stat_labels[item.bonus_stat] }}</div>
+    <div class="stat-value" style="font-size:1.05rem;margin:8px 0">
+      {{ item.nom }}{% if item.amelioration %} <span style="color:var(--or-clair);font-size:0.8rem">+{{ item.amelioration }}</span>{% endif %}
+    </div>
+    <div style="color:var(--or);font-size:0.9rem">+{{ item.valeur_bonus + (item.amelioration or 0) * 2 }} {{ stat_labels[item.bonus_stat] }}</div>
     {% else %}
     <div class="stat-value" style="font-size:1.05rem;opacity:0.35;margin:8px 0">— Vide —</div>
     <div style="color:var(--gris);font-size:0.75rem">Forge un équipement</div>
