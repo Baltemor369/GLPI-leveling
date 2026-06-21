@@ -29,10 +29,10 @@ services:
       retries: 10
       start_period: 15s
 
-  # ── Interface web (Streamlit) ────────────────────────────────────────────────
+  # ── Interface web (Flask + Gunicorn) ─────────────────────────────────────────
   app:
     build: .
-    command: streamlit run app/Aventurier.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
+    command: gunicorn --bind 0.0.0.0:8501 --workers 4 --timeout 120 web.app:app
     ports:
       - "${APP_PORT:-8501}:8501"
     depends_on:

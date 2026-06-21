@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connexion — GlpiLeveling</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-box">
+    <div class="login-title">⚔ GLPILEVELING ⚔</div>
+    <div class="login-sub">Le Royaume du Helpdesk t'attend, Aventurier.</div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <ul class="flash-list" style="margin-bottom:14px">
+      {% for cat, msg in messages %}
+      <li class="flash-msg {{ cat }}">{{ msg }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+
+    <form method="post" action="{{ url_for('auth.login') }}">
+      <div class="form-group">
+        <label class="login-label" for="username">Identifiant GLPI</label>
+        <input class="form-input" type="text" id="username" name="username"
+               placeholder="prenom.nom" autocomplete="username" required>
+      </div>
+      <div class="form-group">
+        <label class="login-label" for="password">Mot de passe</label>
+        <input class="form-input" type="password" id="password" name="password"
+               autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-block" style="margin-top:8px">
+        Entrer dans le Royaume
+      </button>
+    </form>
+
+    <div class="login-version">v1.4.0</div>
+  </div>
+</div>
+</body>
+</html>

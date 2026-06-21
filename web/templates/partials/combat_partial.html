@@ -1,0 +1,94 @@
+<!-- Le div extérieur porte le polling — outerHTML le remplace entièrement à chaque tick -->
+<div id="combat-main"
+     hx-get="{{ url_for('arene.combat_partial', combat_id=c.id) }}"
+     hx-trigger="every 2s"
+     hx-target="#combat-main"
+     hx-swap="outerHTML">
+
+{% if nouveaux_badges is defined and nouveaux_badges %}
+{% for code in nouveaux_badges %}
+<div class="flash-msg success">🏅 Badge débloqué : {{ code }} !</div>
+{% endfor %}
+{% endif %}
+
+<h2>⚔️ Combat en cours !</h2>
+{% if c.mise > 0 %}
+<div style="text-align:center;color:var(--or);margin-bottom:12px">
+  💰 Mise : {{ c.mise }} or chacun — Pot : <strong>{{ c.mise * 2 }} or</strong>
+</div>
+{% endif %}
+<hr>
+
+<div class="grid-2" style="gap:20px;margin-bottom:16px">
+  <!-- Attaquant -->
+  <div class="stat-card">
+    <div class="stat-label">ATTAQUANT</div>
+    <div class="stat-value" style="font-size:1.3rem">{{ att_j.username | e }}</div>
+    <div style="color:var(--gris);font-size:0.8rem">Niv. {{ att_j.level }}</div>
+    <div style="margin:10px 0">
+      <div style="display:flex;justify-content:space-between;font-size:0.82rem">
+        <span>PV</span><span style="color:{{ color_att }}">{{ pv_att }} / {{ att_pv_max }}</span>
+      </div>
+      <div class="pv-bar-bg">
+        <div class="pv-bar-fill" style="background:{{ color_att }};width:{{ pct_att }}%"></div>
+      </div>
+    </div>
+    <div style="font-size:0.8rem;color:var(--gris)">⚔ {{ att_for }} &nbsp;|&nbsp; 🛡 {{ att_res }} &nbsp;|&nbsp; ⚡ {{ att_agi }}</div>
+    <div style="font-size:0.75rem;color:#6ab0e8;margin-top:4px">
+      Esquive : {{ "%.0f"|format(chance_esquive(att_agi, def_for, att_j.level, att_eq) * 100) }}%
+    </div>
+  </div>
+
+  <!-- Défenseur -->
+  <div class="stat-card">
+    <div class="stat-label">DÉFENSEUR</div>
+    <div class="stat-value" style="font-size:1.3rem">{{ def_j.username | e }}</div>
+    <div style="color:var(--gris);font-size:0.8rem">Niv. {{ def_j.level }}</div>
+    <div style="margin:10px 0">
+      <div style="display:flex;justify-content:space-between;font-size:0.82rem">
+        <span>PV</span><span style="color:{{ color_def }}">{{ pv_def }} / {{ def_pv_max }}</span>
+      </div>
+      <div class="pv-bar-bg">
+        <div class="pv-bar-fill" style="background:{{ color_def }};width:{{ pct_def }}%"></div>
+      </div>
+    </div>
+    <div style="font-size:0.8rem;color:var(--gris)">⚔ {{ def_for }} &nbsp;|&nbsp; 🛡 {{ def_res }} &nbsp;|&nbsp; ⚡ {{ def_agi }}</div>
+    <div style="font-size:0.75rem;color:#6ab0e8;margin-top:4px">
+      Esquive : {{ "%.0f"|format(chance_esquive(def_agi, att_for, def_j.level, def_eq) * 100) }}%
+    </div>
+  </div>
+</div>
+<hr>
+
+{% if mon_tour %}
+<h3>C'est ton tour — choisis ton action !</h3>
+<div class="grid-{{ ACTIONS|length }}" style="margin-bottom:16px">
+  {% for aid, label, mult, desc, malus in ACTIONS %}
+  <div class="stat-card" style="cursor:pointer">
+    <div class="stat-label">{{ label }}</div>
+    <div style="color:var(--gris);font-size:0.75rem;margin:6px 0">{{ desc }}</div>
+    <div style="color:var(--or);font-size:0.85rem">{% if mult > 0 %}×{{ mult }}{% else %}+15% PV{% endif %}</div>
+    <div style="color:#6ab0e8;font-size:0.72rem;margin:4px 0 10px">
+      {% if malus > 0 %}⚡ -{{ (malus*100)|int }}% vitesse{% else %}⚡ Vitesse pleine{% endif %}
+    </div>
+    <button class="btn btn-block btn-sm"
+            hx-post="{{ url_for('arene.action') }}"
+            hx-vals='{"combat_id": "{{ c.id }}", "action_id": "{{ aid }}"}'
+            hx-target="#combat-main"
+            hx-swap="outerHTML">
+      {{ label }}
+    </button>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+{% set adversaire = att_j.username if joueur_id == c.defenseur_id else def_j.username %}
+<div class="flash-msg info">⏳ En attente du tour de <strong>{{ adversaire | e }}</strong>...</div>
+{% endif %}
+
+<h3>📜 Journal de combat</h3>
+{% for ligne in lignes %}{% if ligne.strip() %}
+<div class="ticket-row">{{ ligne | e }}</div>
+{% endif %}{% endfor %}
+
+</div><!-- #combat-main -->

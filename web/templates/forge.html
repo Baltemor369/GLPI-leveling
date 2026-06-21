@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Forge — GlpiLeveling{% endblock %}
+
+{% block content %}
+<h1>🔨 La Forge</h1>
+<p style="color:var(--gris);font-style:italic;margin-top:-8px;margin-bottom:16px">
+  Dépense ton or pour forger des équipements et renforcer ton aventurier.
+</p>
+
+<!-- Ressources -->
+<div class="grid-5" style="margin-bottom:20px">
+  <div class="metric-card"><div class="metric-label">💰 Or</div><div class="metric-value">{{ joueur.or_monnaie }}</div></div>
+  <div class="metric-card"><div class="metric-label">🌲 Bois de Chêne</div><div class="metric-value">{{ stock.get('bois_chene',0) }}</div></div>
+  <div class="metric-card"><div class="metric-label">⚙️ Minerai de Fer</div><div class="metric-value">{{ stock.get('minerai_fer',0) }}</div></div>
+  <div class="metric-card"><div class="metric-label">💎 Cristal Runique</div><div class="metric-value">{{ stock.get('cristal_runique',0) }}</div></div>
+  <div class="metric-card"><div class="metric-label">✨ Essence du Néant</div><div class="metric-value">{{ stock.get('essence_neant',0) }}</div></div>
+</div>
+<hr>
+
+{% for type_key, type_label in [('arme','⚔️ Armes'),('armure','🛡️ Armures'),('amul','📿 Amulettes')] %}
+<h3>{{ type_label }}</h3>
+<div class="grid-5" style="margin-bottom:20px">
+  {% for item in catalogue if item.type == type_key %}
+  <div>
+    <div class="stat-card" style="{% if not item.peut_acheter %}opacity:0.45{% else %}border:1px solid {{ item.tier_color }}{% endif %}">
+      <div style="color:{{ item.tier_color }};font-size:0.7rem;font-weight:bold;letter-spacing:1px">
+        Tier {{ item.tier }}
+      </div>
+      <div class="stat-label" style="margin:4px 0">{{ item.nom }}</div>
+      <div style="color:var(--parchemin);font-size:0.9rem">+{{ item.valeur_bonus }} {{ stat_labels[item.bonus_stat] }}</div>
+      <div style="color:var(--or);margin-top:6px">💰 {{ item.cout }}</div>
+      {% for code, qty in item.mat_requis.items() %}
+      <div style="color:#6ab0e8;font-size:0.7rem">{{ mat_noms[code] }} ×{{ qty }}</div>
+      {% endfor %}
+      {% if item.passif_desc %}
+      <div style="color:{{ item.tier_color }};font-size:0.7rem;margin-top:4px">{{ item.passif_desc }}</div>
+      {% endif %}
+    </div>
+    <form method="post" action="{{ url_for('forge.acheter') }}" style="margin-top:6px">
+      <input type="hidden" name="nom" value="{{ item.nom }}">
+      <button type="submit" class="btn btn-block btn-sm"
+              {% if not item.peut_acheter %}disabled{% endif %}>
+        Forger
+      </button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% endfor %}
+<hr>
+
+<!-- Inventory -->
+<h3>🎒 Inventaire & Améliorations</h3>
+{% if not inventaire %}
+<p style="color:var(--gris);font-style:italic">Ton inventaire est vide. Forge ton premier équipement !</p>
+{% else %}
+{% for item in inventaire %}
+<div class="inv-row">
+  <div class="inv-name">
+    <span style="color:{{ item.tier_color }}">{{ item.nom }}{% if item.amelioration %} +{{ item.amelioration }}{% endif %}</span>
+  </div>
+  <div class="inv-stat">+{{ item.stat_totale }} {{ stat_labels.get(item.bonus_stat,'') }}</div>
+  <div class="inv-equip">{% if item.equipe %}✅ Équipé{% else %}—{% endif %}</div>
+  <div class="inv-btn">
+    {% if not item.equipe %}
+    <form method="post" action="{{ url_for('forge.equiper', equip_id=item.id) }}" style="display:inline">
+      <button type="submit" class="btn btn-sm">Équiper</button>
+    </form>
+    {% endif %}
+  </div>
+  <div class="inv-upg">
+    {% if item.amelioration < 20 %}
+    <form method="post" action="{{ url_for('forge.ameliorer', equip_id=item.id) }}" style="display:inline">
+      <button type="submit" class="btn btn-sm"
+              {% if not item.peut_ameliorer %}disabled{% endif %}>
+        ⬆ +{{ item.amelioration + 1 }} (💰{{ item.cout_upgrade }}{% if item.bois_remise %} 🌲-30%{% endif %})
+      </button>
+    </form>
+    {% else %}
+    <span style="color:var(--or)">MAX</span>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Journal — GlpiLeveling{% endblock %}
+
+{% block content %}
+<h1>📜 Journal des Aventures</h1>
+<p style="color:var(--gris);font-style:italic;margin-top:-8px;margin-bottom:16px">
+  Historique de tous les tickets traités par l'équipe
+</p>
+
+{% if not tickets %}
+<div class="flash-msg info">Aucun ticket enregistré pour l'instant. Lance le worker !</div>
+{% else %}
+
+<div class="grid-3" style="margin-bottom:20px">
+  <div class="metric-card">
+    <div class="metric-label">Tickets traités</div>
+    <div class="metric-value">{{ total }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Taux de conformité</div>
+    <div class="metric-value">{{ taux_conf }}%</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">XP distribués</div>
+    <div class="metric-value">{{ xp_total }}</div>
+  </div>
+</div>
+
+<hr>
+
+{% for t in tickets %}
+<div class="ticket-row">
+  <strong>Ticket #{{ t.ticket_id }}</strong>
+  &nbsp;·&nbsp;
+  <span style="color:#c9a84c">{{ t.username | e }}</span>
+  &nbsp;·&nbsp;
+  {% if t.conforme %}
+  <span class="badge-conforme">✓ CONFORME</span>
+  {% else %}
+  <span class="badge-nonconforme">✗ NON CONFORME</span>
+  {% endif %}
+  &nbsp;·&nbsp;
+  <span style="color:#c9a84c">+{{ t.xp_gagne }} XP</span>
+  <span style="float:right;color:#6b5a4e;font-size:0.82rem">
+    {% if t.date_traitement %}{{ t.date_traitement.strftime('%d/%m/%Y %H:%M') }}{% else %}—{% endif %}
+  </span>
+  <div class="ticket-meta">{{ t.analyse_llm or '' | e }}</div>
+</div>
+{% endfor %}
+
+{% endif %}
+{% endblock %}

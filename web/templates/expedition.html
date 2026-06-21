@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Expédition — GlpiLeveling{% endblock %}
+
+{% block content %}
+<h1>🗺️ Expédition</h1>
+<p style="color:var(--gris);font-style:italic;margin-top:-8px;margin-bottom:16px">
+  Pars en mission pour rapporter matériaux et richesses. Durée : 2 heures.
+</p>
+<hr>
+
+<!-- Matériaux -->
+<h3>🎒 Vos matériaux</h3>
+<div class="grid-5" style="margin-bottom:16px">
+  {% for loot in loot_table %}
+  <div class="stat-card" style="text-align:center">
+    <div style="font-size:1.5rem">{{ loot.icone }}</div>
+    <div style="color:var(--gris);font-size:0.75rem;margin:4px 0">{{ loot.nom }}</div>
+    <div style="color:var(--or);font-size:1.1rem"><strong>{{ stock.get(loot.code, 0) }}</strong></div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if pity > 0 %}
+{% if pity >= pity_seuil %}
+<div class="flash-msg warning">
+  🔮 Pity Essence : <strong>{{ pity }}/{{ pity_seuil }}</strong> — Garantie active : prochaine expédition drop Essence !
+</div>
+{% else %}
+<div class="flash-msg info">🔮 Pity Essence : {{ pity }}/{{ pity_seuil }} expéditions sans Essence du Néant</div>
+{% endif %}
+{% endif %}
+<hr>
+
+<!-- Table de loot -->
+<details class="details-block" style="margin-bottom:16px">
+  <summary>📋 Table de loot — probabilités par roll</summary>
+  <div class="grid-5" style="margin-top:10px">
+    {% for item in loot_table %}
+    <div class="stat-card" style="text-align:center">
+      <div style="font-size:1.4rem">{{ item.icone }}</div>
+      <div style="color:var(--parchemin);font-size:0.8rem;margin:4px 0">{{ item.nom }}</div>
+      <div style="color:var(--gris);font-size:0.75rem">{{ item.min }}–{{ item.max }} unités</div>
+      <div style="color:var(--or);font-size:0.85rem">{{ "%.0f"|format(item.pct) }}% / roll</div>
+    </div>
+    {% endfor %}
+  </div>
+  <p style="color:var(--gris);font-size:0.8rem;margin-top:8px">
+    3 rolls par expédition • Pity Essence garantie à {{ pity_seuil }} expéditions sans en obtenir
+  </p>
+</details>
+<hr>
+
+<!-- Le partial s'auto-enveloppe avec le div #expedition-status + hx-trigger (outerHTML swap) -->
+{% include 'partials/expedition_status.html' %}
+{% endblock %}

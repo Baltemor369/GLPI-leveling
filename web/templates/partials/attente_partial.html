@@ -1,0 +1,29 @@
+<!-- Défi en attente — div avec polling outerHTML -->
+<div id="attente-main"
+     hx-get="{{ url_for('arene.attente_partial', combat_id=c.id) }}"
+     hx-trigger="every 3s"
+     hx-target="#attente-main"
+     hx-swap="outerHTML">
+
+{% if est_defenseur %}
+<h2>⚔️ Défi reçu de <strong>{{ c.nom_attaquant | e }}</strong> !</h2>
+<p style="margin-bottom:16px">
+  {{ c.nom_attaquant | e }} te défie en combat
+  {% if c.mise > 0 %} — Mise : <strong>{{ c.mise }} or</strong> chacun (pot : {{ c.mise * 2 }} or){% endif %}.
+  Acceptes-tu ?
+</p>
+<div style="display:flex;gap:12px">
+  <form method="post" action="{{ url_for('arene.accepter', combat_id=c.id) }}">
+    <button type="submit" class="btn">✅ Accepter le combat</button>
+  </form>
+  <form method="post" action="{{ url_for('arene.refuser', combat_id=c.id) }}">
+    <button type="submit" class="btn btn-secondary">❌ Refuser</button>
+  </form>
+</div>
+{% else %}
+<h2>⏳ Défi envoyé à <strong>{{ c.nom_defenseur | e }}</strong></h2>
+<div class="flash-msg info">En attente de sa réponse...</div>
+<a href="{{ url_for('arene.index') }}" class="btn btn-secondary" style="margin-top:12px">Annuler</a>
+{% endif %}
+
+</div><!-- #attente-main -->

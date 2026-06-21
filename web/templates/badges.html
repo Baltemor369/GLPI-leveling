@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Badges — GlpiLeveling{% endblock %}
+
+{% block content %}
+<h1>🏅 Badges &amp; Succès</h1>
+<p style="color:var(--gris);font-style:italic;margin-top:-8px;margin-bottom:16px">
+  Accomplis des exploits pour débloquer des badges.
+</p>
+<hr>
+
+<h3>{{ debloque|length }} / {{ total }} badges obtenus</h3>
+<hr>
+
+{% if debloque %}
+<h3>✅ Débloqués</h3>
+<div class="grid-4" style="margin-bottom:20px">
+  {% for b in debloque %}
+  <div class="stat-card" style="border:1px solid var(--or)">
+    <div style="font-size:2rem">{{ b.icone }}</div>
+    <div class="stat-label" style="color:var(--or);margin:6px 0">{{ b.nom }}</div>
+    <div style="color:var(--gris);font-size:0.75rem">{{ b.description }}</div>
+    <div style="color:var(--gris);font-size:0.7rem;margin-top:6px">
+      Obtenu le {% if b.date_obtenu %}{{ b.date_obtenu.strftime('%d/%m/%Y') }}{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<hr>
+{% endif %}
+
+{% if verrouille %}
+<h3>🔒 Verrouillés</h3>
+<div class="grid-4">
+  {% for b in verrouille %}
+  <div class="stat-card" style="opacity:0.45">
+    <div style="font-size:2rem">🔒</div>
+    <div class="stat-label" style="margin:6px 0">{{ b.nom }}</div>
+    <div style="color:var(--gris);font-size:0.75rem">{{ b.description }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

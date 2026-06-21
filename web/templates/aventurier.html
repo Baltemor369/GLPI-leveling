@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}{{ joueur.username }} — GlpiLeveling{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+  <div>
+    <h1>⚔️ {{ joueur.username.upper() }}</h1>
+    <h3 style="margin-top:-8px;color:var(--gris)">Niveau {{ joueur.level }} &nbsp;·&nbsp; Aventurier</h3>
+  </div>
+  <div class="stat-card" style="min-width:120px;padding:12px 20px">
+    <div class="stat-label">💰 OR</div>
+    <div class="stat-value">{{ joueur.or_monnaie }}</div>
+  </div>
+</div>
+
+<!-- XP Bar -->
+<div class="xp-bar-bg"><div class="xp-bar-fill" style="width:{{ pct }}%"></div></div>
+<div class="xp-label">{{ xp_actuel }} / {{ xp_suivant }} XP &nbsp;({{ pct }}%)</div>
+
+<div class="ornement" style="margin:20px 0">◆◆◆</div>
+
+<!-- Stats -->
+<h3>📊 Statistiques</h3>
+{% if joueur.points_a_attribuer > 0 %}
+<div class="flash-msg info" style="margin-bottom:12px">
+  ✨ {{ joueur.points_a_attribuer }} point(s) de statistique disponible(s) — répartis-les ci-dessous !
+</div>
+{% endif %}
+
+<div class="grid-4" style="margin-bottom:20px">
+  {% set stats = [
+    ('force_p',         '⚔️ FORCE',         joueur.force_p,         'Dégâts en combat'),
+    ('constitution_pv', '🛡️ CONSTITUTION',   joueur.constitution_pv, 'Points de vie max'),
+    ('agilite_vit',     '💨 AGILITÉ',        joueur.agilite_vit,     'Initiative & esquive'),
+    ('esprit_res',      '🔮 ESPRIT',         joueur.esprit_res,      'Résistance aux dégâts'),
+  ] %}
+  {% for key, label, val, desc in stats %}
+  <div>
+    <div class="stat-card">
+      <div class="stat-label">{{ label }}</div>
+      <div class="stat-value">{{ val }}</div>
+      <div class="stat-desc">{{ desc }}</div>
+    </div>
+    {% if joueur.points_a_attribuer > 0 %}
+    <form method="post" action="{{ url_for('aventurier.depenser_stat') }}" style="margin-top:6px">
+      <input type="hidden" name="stat" value="{{ key }}">
+      <button type="submit" class="btn btn-block btn-sm">+ 1</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<div class="ornement" style="margin:20px 0">◆◆◆</div>
+
+<!-- Equipment -->
+<h3>🗡️ Équipement</h3>
+{% set stat_labels = {'force_p':'Force','esprit_res':'Résistance','constitution_pv':'PV','agilite_vit':'Agilité'} %}
+<div class="grid-3" style="margin-bottom:20px">
+  {% for type_slot, slot_label in [('arme','⚔️ ARME'),('armure','🛡️ ARMURE'),('amul','📿 AMULETTE')] %}
+  {% set item = equipes | selectattr('type','equalto',type_slot) | first | default(none) %}
+  <div class="stat-card">
+    <div class="stat-label">{{ slot_label }}</div>
+    {% if item %}
+    <div class="stat-value" style="font-size:1.05rem;margin:8px 0">{{ item.nom }}</div>
+    <div style="color:var(--or);font-size:0.9rem">+{{ item.valeur_bonus }} {{ stat_labels[item.bonus_stat] }}</div>
+    {% else %}
+    <div class="stat-value" style="font-size:1.05rem;opacity:0.35;margin:8px 0">— Vide —</div>
+    <div style="color:var(--gris);font-size:0.75rem">Forge un équipement</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<div class="ornement" style="margin:20px 0">◆◆◆</div>
+
+<!-- Recent tickets -->
+<h3>📜 Derniers tickets traités</h3>
+{% if not tickets %}
+<p style="color:var(--gris);font-style:italic">Aucun ticket traité pour l'instant.</p>
+{% else %}
+{% for t in tickets %}
+<div class="ticket-row">
+  <strong style="color:var(--or-clair)">Ticket #{{ t.ticket_id }}</strong>
+  &nbsp;
+  {% if t.conforme %}
+  <span class="badge-conforme">✓ CONFORME</span>
+  {% else %}
+  <span class="badge-nonconforme">✗ NON CONFORME</span>
+  {% endif %}
+  &nbsp;
+  <span style="color:var(--or)">+{{ t.xp_gagne }} XP</span>
+  <div class="ticket-meta">{{ t.analyse_llm or '' }}</div>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

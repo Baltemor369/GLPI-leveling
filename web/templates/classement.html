@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Classement — GlpiLeveling{% endblock %}
+
+{% block content %}
+<h1>🏆 Classement des Aventuriers</h1>
+
+{% if mon_rang %}
+<div style="text-align:right;color:var(--or);font-size:0.85rem;margin-top:-8px;margin-bottom:14px">
+  Votre position : <strong>#{{ mon_rang }}</strong> sur {{ joueurs|length }} aventuriers
+</div>
+{% endif %}
+
+{% if not joueurs %}
+<div class="flash-msg warning">Aucun joueur en base.</div>
+{% else %}
+
+{% set medailles = {1:'🥇',2:'🥈',3:'🥉'} %}
+
+{% for j in joueurs %}
+{% set rang = loop.index %}
+{% set est_moi = (j.id == joueur_id) %}
+{% set xp_prec = xp_requis_pour_niveau(j.level) %}
+{% set xp_suiv = xp_requis_pour_niveau(j.level + 1) %}
+{% set denom = [1, xp_suiv - xp_prec] | max %}
+{% set raw_pct = ((j.xp - xp_prec) / denom * 100) | int %}
+{% set pct = [100, raw_pct] | min %}
+
+<div class="rank-row {% if est_moi %}me{% endif %}">
+  <div class="rank-badge">{{ medailles.get(rang, '#' ~ rang) }}</div>
+
+  <div class="rank-name {% if rang <= 3 %}rank-{{ rang }}{% endif %}">
+    {{ j.username | e }}
+    {% if est_moi %}<span class="me-tag">VOUS</span>{% endif %}
+  </div>
+
+  <div class="rank-level" style="color:var(--gris)">Niv. {{ j.level }}</div>
+
+  <div class="rank-xp">⭐ {{ j.xp }} XP</div>
+
+  <div class="rank-vic">⚔️ {{ j.victoires }}</div>
+
+  <div class="rank-bar" style="min-width:80px">
+    <div class="xp-bar-bg" style="height:12px;margin:0">
+      <div class="xp-bar-fill" style="width:{{ pct }}%"></div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+{% endif %}
+{% endblock %}

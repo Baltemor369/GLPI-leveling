@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.4.0] — 2026-06-21
+
+### Nouveautés
+- **Réécriture complète du frontend** : remplacement de Streamlit par Flask 3 + Jinja2 + HTMX
+  - Architecture page-par-page stricte : chaque route est isolée dans son propre Blueprint
+  - Zéro contamination inter-pages par construction (pas de session Streamlit partagée, pas de fragments `run_every`)
+  - HTMX polling `outerHTML` (2s combat, 3s attente, 30s expédition) — le polling s'arrête proprement quand le div porteur est remplacé (+ code 286)
+  - Authentification via cookies de session HTTP signés (`flask.session`) — suppression du mécanisme token-dans-URL
+  - Backend (`sync/`) inchangé : seul le frontend change de stack
+
+### Infrastructure
+- `Dockerfile` : remplace `COPY app/` par `COPY web/`, supprime le patch Streamlit
+- `docker-compose.yml` : `app` passe de `streamlit run` à `gunicorn --workers 4`
+- `requirements.txt` : `flask>=3.0` + `gunicorn>=21.0` remplacent `streamlit` + `pandas`
+- `.env` : ajout `SECRET_KEY` pour la signature des cookies Flask
+
+### Correctifs intégrés
+- Forge : vérification serveur des matériaux ET commit atomique unique (or + équipement + matériaux)
+- Arène : garde `combat_id is None` sur toutes les routes HTMX, erreur `jouer_action` remontée en flash
+- Expédition : exception badge post-commit catchée pour garantir l'affichage du butin
+
 ## [1.3.2] — 2026-06-20
 
 ### Correctifs

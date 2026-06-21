@@ -1,0 +1,18 @@
+<!-- Combat terminé — div sans polling, le ticker s'arrête (+ 286 stoppe le poll) -->
+<div id="combat-main">
+{% if victoire == 'victoire' %}
+<div class="flash-msg success" style="font-size:1.1rem">🏆 {{ message | e }}</div>
+{% elif victoire == 'defaite' %}
+<div class="flash-msg error" style="font-size:1.1rem">💀 {{ message | e }}</div>
+{% else %}
+<div class="flash-msg info">{{ message | e }}</div>
+{% endif %}
+
+{% if nouveaux_badges is defined and nouveaux_badges %}
+{% for code in nouveaux_badges %}
+<div class="flash-msg success">🏅 Badge débloqué : {{ code }} !</div>
+{% endfor %}
+{% endif %}
+
+<a href="{{ url_for('arene.index') }}" class="btn" style="margin-top:12px">↩ Retourner au lobby</a>
+</div>
