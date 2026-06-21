@@ -112,7 +112,8 @@ CREATE TABLE IF NOT EXISTS combats (
     pv_defenseur    INTEGER NOT NULL DEFAULT 0,
     mise            INTEGER NOT NULL DEFAULT 0,
     log_combat      TEXT NOT NULL DEFAULT '',
-    vainqueur_id    INTEGER REFERENCES joueurs(id)
+    vainqueur_id    INTEGER REFERENCES joueurs(id),
+    cree_a          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 """
 
@@ -153,6 +154,43 @@ MIGRATIONS = [
     # 5 — points de combat Elo (initialisés à 1000 pour tous)
     """
     ALTER TABLE joueurs ADD COLUMN IF NOT EXISTS points_combat INTEGER NOT NULL DEFAULT 1000;
+    """,
+    # 6 — saisons et archives de fin de saison
+    """
+    CREATE TABLE IF NOT EXISTS saisons (
+        id      SERIAL PRIMARY KEY,
+        numero  INTEGER NOT NULL,
+        debut   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        fin     TIMESTAMPTZ,
+        statut  VARCHAR(20) NOT NULL DEFAULT 'en_cours'
+                CHECK (statut IN ('en_cours','termine'))
+    );
+    CREATE TABLE IF NOT EXISTS saison_archives (
+        id               SERIAL PRIMARY KEY,
+        saison_id        INTEGER NOT NULL REFERENCES saisons(id),
+        joueur_id        INTEGER NOT NULL REFERENCES joueurs(id),
+        rang_xp          INTEGER NOT NULL DEFAULT 0,
+        rang_pc          INTEGER NOT NULL DEFAULT 0,
+        xp_final         INTEGER NOT NULL DEFAULT 0,
+        pc_final         INTEGER NOT NULL DEFAULT 1000,
+        victoires_final  INTEGER NOT NULL DEFAULT 0,
+        level_final      INTEGER NOT NULL DEFAULT 1,
+        enregistre_a     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    """,
+    # 7 — timestamp de création sur combats (victoires scopées par saison).
+    # Les lignes existantes reçoivent NOW() à la migration — acceptable pour la 1re clôture.
+    """
+    ALTER TABLE combats ADD COLUMN IF NOT EXISTS cree_a TIMESTAMPTZ NOT NULL DEFAULT NOW();
+    """,
+    # 8 — unicité partielle : enforce qu'une seule saison peut être 'en_cours'
+    # simultanément. L'index filtre uniquement les lignes 'en_cours', donc les
+    # saisons 'termine' ne sont pas contraintes.
+    # Travaille de pair avec le FOR UPDATE et la garde rowcount de
+    # archiver_et_reset_saison pour empêcher tout double-reset.
+    """
+    CREATE UNIQUE INDEX IF NOT EXISTS saisons_unique_en_cours
+        ON saisons (statut) WHERE statut = 'en_cours';
     """,
 ]
 
@@ -285,6 +323,9 @@ _BADGES_SEED = [
     ("invaincu",           "Invaincu",             "Remporter 3 combats consécutifs",                         "🔥"),
     ("sans_pitie",         "Sans Pitié",           "Gagner un combat sans jamais utiliser Repos",             "💀"),
     ("stakhanoviste",      "Stakhanoviste",        "Résoudre 5 tickets dans la même journée",                 "📋"),
+    ("saison_champion_xp", "Champion de Saison",   "Terminer 1er au classement XP d'une saison",             "👑"),
+    ("saison_champion_pc", "Gladiateur de Saison", "Terminer 1er au classement Combat d'une saison",         "🏆"),
+    ("saison_podium",      "Héros de Saison",       "Figurer dans le top 3 d'un classement saisonnier",       "🎖️"),
 ]
 
 
@@ -413,6 +454,140 @@ def consommer_materiaux(conn, joueur_id: int, materiaux: dict) -> bool:
             """, (qty, joueur_id, code))
     conn.commit()
     return True
+
+
+# ---------------------------------------------------------------------------
+# Saisons
+# ---------------------------------------------------------------------------
+
+def get_saison_courante(conn) -> dict | None:
+    """Return the current active season row as a dict, or None if no season exists yet.
+
+    The unique partial index on saisons(statut) WHERE statut='en_cours' guarantees
+    at most one row is returned; ORDER BY id DESC is a safety fallback only.
+    """
+    with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute("SELECT * FROM saisons WHERE statut = 'en_cours' ORDER BY id DESC LIMIT 1")
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+
+def init_saison_si_absente(conn) -> bool:
+    """Crée la saison 1 si aucune saison n'existe (INSERT atomique, pas de race condition).
+    Retourne True si la saison 1 vient d'être créée."""
+    with conn.cursor() as cur:
+        cur.execute("INSERT INTO saisons (numero) SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM saisons)")
+        created = cur.rowcount == 1
+    if created:
+        conn.commit()
+    return created
+
+
+def archiver_et_reset_saison(conn) -> list[dict]:
+    """Archive les stats de fin de saison, remet tous les joueurs à zéro,
+    clôt la saison courante et crée la suivante.
+
+    Garanties transactionnelles :
+    - SELECT … FOR UPDATE verrouille la ligne de saison dès le début, bloquant
+      toute exécution concurrente (relance rapide du worker, intervention manuelle).
+    - La garde ``AND statut='en_cours'`` sur l'UPDATE final vérifie rowcount == 1 ;
+      si la saison avait déjà été clôturée par un autre process, rowcount == 0 et
+      une RuntimeError est levée pour annuler toute la transaction.
+    - Les badges saison sont insérés via INSERT … ON CONFLICT DO NOTHING dans
+      la même transaction que l'archivage et le reset, garantissant leur atomicité.
+      (L'appel passe en direct sans passer par attribuer_badge, qui commit seul.)
+
+    Retourne la liste des archives (avec rangs rang_xp / rang_pc) de la saison close.
+    """
+    with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        # FOR UPDATE : verrouille la ligne pour éviter un double-reset concurrent
+        # (cas de relance rapide du worker ou intervention manuelle).
+        cur.execute(
+            "SELECT * FROM saisons WHERE statut = 'en_cours' ORDER BY id DESC LIMIT 1 FOR UPDATE"
+        )
+        row = cur.fetchone()
+        if row is None:
+            raise RuntimeError("archiver_et_reset_saison appelé sans saison en cours")
+        saison    = dict(row)
+        saison_id = saison["id"]
+        numero    = saison["numero"]
+        debut     = saison["debut"]
+
+        # Classement final de la saison.
+        # On ne compte que les combats gagnés DEPUIS le début de la saison
+        # (c.cree_a >= debut), pour que les victoires soient scopées à la saison.
+        # Deux classements indépendants : rang_xp (par XP) et rang_pc (par points
+        # de combat), chacun calculé via RANK() sur l'ensemble des joueurs.
+        cur.execute("""
+            SELECT j.id AS joueur_id, j.xp, j.points_combat, j.level,
+                   COUNT(c.id) AS victoires,
+                   RANK() OVER (ORDER BY j.xp DESC)            AS rang_xp,
+                   RANK() OVER (ORDER BY j.points_combat DESC) AS rang_pc
+            FROM joueurs j
+            LEFT JOIN combats c ON c.vainqueur_id = j.id
+                                AND c.statut = 'termine'
+                                AND c.cree_a >= %s
+            GROUP BY j.id, j.xp, j.points_combat, j.level
+        """, (debut,))
+        resultats = [dict(r) for r in cur.fetchall()]
+
+        for r in resultats:
+            cur.execute("""
+                INSERT INTO saison_archives
+                    (saison_id, joueur_id, rang_xp, rang_pc,
+                     xp_final, pc_final, victoires_final, level_final)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (saison_id, r["joueur_id"], r["rang_xp"], r["rang_pc"],
+                  r["xp"], r["points_combat"], r["victoires"], r["level"]))
+
+        # Badges saison, dans la MÊME transaction que l'archivage et le reset.
+        # On insère en direct (sans passer par attribuer_badge, qui commit) afin de
+        # préserver l'atomicité. ON CONFLICT DO NOTHING = idempotent si rejoué.
+        def _attribuer_badge_saison(joueur_id: int, badge_code: str):
+            cur.execute(
+                "INSERT INTO joueur_badges (joueur_id, badge_code) VALUES (%s, %s) "
+                "ON CONFLICT DO NOTHING",
+                (joueur_id, badge_code),
+            )
+
+        for r in resultats:
+            joueur_id = r["joueur_id"]
+            if r["rang_xp"] == 1:
+                _attribuer_badge_saison(joueur_id, "saison_champion_xp")
+            if r["rang_pc"] == 1:
+                _attribuer_badge_saison(joueur_id, "saison_champion_pc")
+            if r["rang_xp"] <= 3 or r["rang_pc"] <= 3:
+                _attribuer_badge_saison(joueur_id, "saison_podium")
+
+        # Annuler les combats et expéditions actifs
+        cur.execute("UPDATE combats     SET statut   = 'termine' WHERE statut IN ('en_attente','en_cours')")
+        cur.execute("UPDATE expeditions SET reclamee = TRUE      WHERE reclamee = FALSE")
+
+        # Remettre les joueurs à zéro
+        cur.execute("""
+            UPDATE joueurs SET
+                xp = 0, level = 1,
+                force_p = 10, constitution_pv = 10, agilite_vit = 10, esprit_res = 10,
+                points_a_attribuer = 0, or_monnaie = 50,
+                points_combat = 1000, pity_expedition = 0
+        """)
+
+        # Supprimer équipements et matériaux
+        cur.execute("DELETE FROM equipements")
+        cur.execute("DELETE FROM materiaux_joueur")
+
+        # Clôturer la saison — la condition AND statut='en_cours' est la garde finale
+        # contre un double-reset : si la saison est déjà 'termine', rowcount == 0.
+        cur.execute(
+            "UPDATE saisons SET statut = 'termine', fin = NOW() WHERE id = %s AND statut = 'en_cours'",
+            (saison_id,),
+        )
+        if cur.rowcount != 1:
+            raise RuntimeError(f"Saison {saison_id} déjà clôturée — reset annulé (double-reset évité)")
+        cur.execute("INSERT INTO saisons (numero) VALUES (%s)", (numero + 1,))
+
+    conn.commit()
+    return resultats
 
 
 # ---------------------------------------------------------------------------

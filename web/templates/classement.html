@@ -2,7 +2,12 @@
 {% block title %}Classement — GlpiLeveling{% endblock %}
 
 {% block content %}
-<h1>🏆 Classement des Aventuriers</h1>
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap">
+  <h1 style="margin:0">🏆 Classement des Aventuriers</h1>
+  {% if saison %}
+  <span style="color:var(--or-clair);font-size:0.9rem;opacity:0.8">Saison {{ saison.numero }}</span>
+  {% endif %}
+</div>
 
 <!-- Onglets -->
 <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:2px solid rgba(138,106,26,0.3);padding-bottom:0">

@@ -120,6 +120,52 @@ def traiter_ticket(conn, glpi: GlpiClient, ticket: dict):
     )
 
 
+def _verifier_reset_saison(conn):
+    """Déclenche le reset mensuel de saison.
+
+    Conditions pour resetter :
+      - on est le 1er du mois, ET
+      - la saison courante n'a pas débuté ce mois-ci (garde idempotente : évite
+        de resetter plusieurs fois le même 1er du mois).
+
+    Toutes les dates proviennent de l'horloge du serveur DB (NOW()), source unique
+    pour éviter tout écart entre l'horloge de l'hôte et celle de la base.
+    """
+    if db.init_saison_si_absente(conn):
+        print("[Saison] Saison 1 initialisée.")
+        return
+
+    saison = db.get_saison_courante(conn)
+    if saison is None:
+        return
+
+    # Date courante lue côté serveur DB (et non côté hôte) pour rester cohérent
+    # avec le timestamp 'debut' de la saison, lui aussi écrit par la DB.
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT EXTRACT(DAY FROM NOW())::int, "
+            "EXTRACT(YEAR FROM NOW())::int, "
+            "EXTRACT(MONTH FROM NOW())::int"
+        )
+        jour_courant, annee_courante, mois_courant = cur.fetchone()
+
+    # On ne clôture une saison que le 1er du mois.
+    if jour_courant != 1:
+        return
+
+    # Si la saison courante a démarré dans le mois courant, le reset du 1er a
+    # déjà eu lieu : la nouvelle saison créée par archiver_et_reset_saison a
+    # reçu NOW() comme 'debut', donc ce test bloque tout nouveau déclenchement
+    # pour le reste du mois (et les appels ultérieurs du même 1er du mois).
+    debut_saison = saison["debut"]
+    if debut_saison.year == annee_courante and debut_saison.month == mois_courant:
+        return
+
+    print(f"[Saison] Fin de saison {saison['numero']} — archivage et reset...")
+    db.archiver_et_reset_saison(conn)  # badges inclus, transaction unique
+    print(f"[Saison] Reset terminé. Saison {saison['numero'] + 1} démarrée.")
+
+
 def enregistrer_techniciens(conn, tickets: list):
     """Pré-enregistre tout technicien assigné (tous statuts) comme joueur 0 XP."""
     for ticket in tickets:
@@ -136,6 +182,7 @@ def boucle_principale():
 
     while True:
         print(f"\n[Sync] Vérification des tickets...")
+        conn = None
         try:
             conn    = db.get_conn()
             tickets = glpi.get_tickets()
@@ -154,9 +201,21 @@ def boucle_principale():
                 cur.execute("DELETE FROM sessions WHERE expires < NOW()")
             conn.commit()
 
-            conn.close()
+            # Pass 4 : vérifier le reset mensuel de saison
+            _verifier_reset_saison(conn)
+
         except Exception as e:
+            import traceback
             print(f"  Erreur : {e}")
+            traceback.print_exc()
+            if conn is not None:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+        finally:
+            if conn is not None:
+                conn.close()
 
         time.sleep(SYNC_INTERVAL_SECONDS)
 

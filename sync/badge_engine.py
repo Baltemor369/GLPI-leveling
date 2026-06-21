@@ -191,6 +191,30 @@ def verifier_badges_forge(conn, joueur_id: int) -> list:
     return nouveaux
 
 
+def verifier_badges_saison(conn, archives: list[dict]) -> dict[int, list[str]]:
+    """Attribue les badges de fin de saison selon les classements finaux.
+    Retourne {joueur_id: [codes_attribués]}.
+
+    NOTE : en production, les badges saison sont attribués à l'intérieur de la
+    transaction unique de ``archiver_et_reset_saison`` (db.py), pas via cette
+    fonction. Cette fonction existe pour les tests unitaires qui vérifient la
+    logique d'attribution de manière isolée, sans déclencher un reset complet.
+    """
+    resultats: dict[int, list[str]] = {}
+    for r in archives:
+        joueur_id = r["joueur_id"]
+        nouveaux = []
+        if r["rang_xp"] == 1 and db.attribuer_badge(conn, joueur_id, "saison_champion_xp"):
+            nouveaux.append("saison_champion_xp")
+        if r["rang_pc"] == 1 and db.attribuer_badge(conn, joueur_id, "saison_champion_pc"):
+            nouveaux.append("saison_champion_pc")
+        if (r["rang_xp"] <= 3 or r["rang_pc"] <= 3) and db.attribuer_badge(conn, joueur_id, "saison_podium"):
+            nouveaux.append("saison_podium")
+        if nouveaux:
+            resultats[joueur_id] = nouveaux
+    return resultats
+
+
 def verifier_badges_expedition(conn, joueur_id: int, butin: list) -> list:
     """Badges déclenchés après réclamation d'une expédition."""
     nouveaux = []

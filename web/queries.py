@@ -93,6 +93,15 @@ def get_tickets_tous(limit: int = 50) -> list[dict]:
             return [dict(r) for r in cur.fetchall()]
 
 
+def get_saison_courante() -> dict | None:
+    """Return all columns of the current active season row, or None if no season exists."""
+    with _conn() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("SELECT * FROM saisons WHERE statut = 'en_cours' ORDER BY id DESC LIMIT 1")
+            row = cur.fetchone()
+            return dict(row) if row else None
+
+
 def depenser_point_stat(joueur_id: int, stat: str) -> bool:
     """Spend one unallocated stat point on the given stat; return False if none available.
 

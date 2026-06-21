@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.6.0] — 2026-06-21
+
+### Nouveautés
+- **Système de saisons** : reset mensuel automatique le 1er de chaque mois à minuit UTC
+  - Tables `saisons` + `saison_archives` (migrations 6 + timestamp `cree_a` sur combats #7 + index unicité partielle #8)
+  - `archiver_et_reset_saison()` : transaction unique (archivage + badges + reset joueurs + suppression équipements/matériaux)
+  - Worker : Pass 4 `_verifier_reset_saison()` — horloge DB, garde idempotente, `FOR UPDATE` + rowcount guard anti-double-reset
+  - Reset scope : XP→0, level→1, stats→10, or→50, PC→1000, pity→0, équipements supprimés, matériaux supprimés
+  - Conservé : badges, `tickets_traites`, historique combats
+- **3 nouveaux badges saison** : Champion de Saison (👑 XP), Gladiateur de Saison (🏆 PC), Héros de Saison (🎖️ top 3)
+- **Affichage numéro de saison** sur la page Classement
+- **14 nouveaux tests** (`tests/test_saison.py`) — total 124 tests
+
+### Sécurité
+- Reset atomique : `FOR UPDATE` sur la saison + `UPDATE ... WHERE statut='en_cours' AND rowcount==1` + index unique partiel
+- `init_saison_si_absente` : INSERT atomique `WHERE NOT EXISTS` (élimine la race condition)
+- `conn.rollback()` explicite dans le `except` du worker + `try/finally` pour garantir `conn.close()`
+- Logging des exceptions `get_saison_courante()` dans la route classement
+
 ## [1.4.1] — 2026-06-21
 
 ### Sécurité
