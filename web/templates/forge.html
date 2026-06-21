@@ -18,7 +18,7 @@
 <hr>
 
 {% for type_key, type_label in [('arme','⚔️ Armes'),('armure','🛡️ Armures'),('amul','📿 Amulettes')] %}
-<h3>{{ type_label }}</h3>
+<h3 style="margin-top:{% if loop.first %}0{% else %}32px{% endif %}">{{ type_label }}</h3>
 <div class="grid-5" style="margin-bottom:20px">
   {% for item in catalogue if item.type == type_key %}
   <div>
