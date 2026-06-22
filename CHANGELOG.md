@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.7.1] — 2026-06-22
+
+### Nouveautés
+- **Favicon** : icône d'onglet SVG (épée dorée sur fond brun, palette du thème), liée dans `base.html` et `login.html`
+
 ## [1.7.0] — 2026-06-22
 
 ### Nouveautés
