@@ -119,6 +119,48 @@ hr {
     font-size: 0.85rem;
     margin-bottom: 10px;
 }
+.sidebar-player .player-xp-restant {
+    color: var(--gris);
+    font-size: 0.72rem;
+    margin-bottom: 8px;
+}
+.sidebar-player .player-stat-badge {
+    display: inline-block;
+    min-width: 16px;
+    padding: 0 5px;
+    margin-left: 4px;
+    background: var(--rouge);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 16px;
+    border-radius: 9px;
+    vertical-align: middle;
+    box-shadow: 0 0 6px rgba(139,26,26,0.6);
+}
+.sidebar-player .player-saison {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin-bottom: 10px;
+    padding: 6px 0;
+    border-top: 1px solid var(--or-sombre);
+}
+.sidebar-player .saison-nom {
+    color: var(--or-clair);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+.sidebar-player .saison-reset {
+    color: var(--gris);
+    font-size: 0.7rem;
+}
+.sidebar-player .player-version {
+    color: var(--gris);
+    font-size: 0.65rem;
+    margin-top: 8px;
+    opacity: 0.7;
+}
 
 .main-content {
     margin-left: var(--sidebar-w);
@@ -515,7 +557,9 @@ input[type="number"].form-input { -moz-appearance: textfield; }
 @media (max-width: 640px) {
     .sidebar { width: 56px; }
     .sidebar-brand, .nav-link span, .sidebar-player .player-name,
-    .sidebar-player .player-level, .sidebar-player .player-or { display: none; }
+    .sidebar-player .player-level, .sidebar-player .player-or,
+    .sidebar-player .player-xp-restant, .sidebar-player .player-saison,
+    .sidebar-player .player-version { display: none; }
     .main-content { margin-left: 56px; padding: 16px; }
     .grid-5, .grid-4, .grid-3 { grid-template-columns: repeat(2, 1fr); }
 }

@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.7.0] — 2026-06-22
+
+### Nouveautés
+- **Infos contextuelles dans la sidebar** (visibles sur toutes les pages, joueur connecté) :
+  - **Version applicative** sous le bouton Déconnexion — lue depuis le nouveau fichier `VERSION` à la racine (source unique de version), exposée aussi sur la page de login (remplace le `v1.4.0` figé)
+  - **Saison courante + compte à rebours** avant le reset mensuel (1er du mois à 00:00 UTC) — affiche « moins d'1h restant » dans la dernière heure
+  - **XP restant** avant le prochain niveau, sous le niveau courant
+  - **Badge rouge** des points de statistique non attribués, sur le niveau
+- Nouveau fichier `VERSION` + `_lire_version()` : centralise le numéro de version (fallback `?` si absent)
+- `Dockerfile` : copie du fichier `VERSION` dans l'image
+- **36 nouveaux tests** (`tests/test_sidebar.py`) — total 160 tests
+
+### Corrections / robustesse
+- Context processor `inject_sidebar` : fallback `_SIDEBAR_VIDE` complet (toutes les clés définies) + logging des exceptions DB avalées (`get_joueur`, `get_saison_courante`)
+
 ## [1.6.0] — 2026-06-21
 
 ### Nouveautés

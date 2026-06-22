@@ -28,6 +28,7 @@ Every closed ticket earns XP, levels up your character and unlocks equipment, ba
 | **Expedition** | 2-hour mission with weighted loot (3 rolls per expedition, pity guaranteed at 10 runs) |
 | **Badges** | 20 unlockable achievements (tickets, combat, forge, levels) |
 | **Leaderboard** | Technician ranking by XP / level / combat wins |
+| **Sidebar** | Live player panel: XP remaining before next level, gold, current season + monthly reset countdown, unallocated stat-point badge, and the app version |
 | **Worker** | Automatic GLPI sync — awards XP and badges on every closed ticket |
 
 ---
@@ -79,12 +80,22 @@ web/
 │   ├── expedition.py   # /expedition (launch, loot, HTMX polling)
 │   └── badges.py       # /badges
 ├── templates/          # Jinja2 templates (base.html + per-page)
-│   ├── base.html
+│   ├── base.html       # Layout + sidebar (player panel, season countdown, version)
+│   ├── login.html      # Login page (also displays the app version)
 │   ├── partials/       # HTMX partial responses (combat, expedition, wait-room)
 │   └── arene/
 └── static/css/
     └── style.css       # Dark-fantasy CSS theme
 ```
+
+The sidebar in `base.html` is fed by two context processors in `app.py`
+(`inject_version`, `inject_sidebar`). For a connected player it shows the XP
+remaining before the next level, a red badge with unallocated stat points, the
+gold balance, the current season number and a countdown to the monthly reset
+(1st of each month at 00:00 UTC). The application version comes from the
+`VERSION` file at the repository root — the **single source of truth** for the
+version — read once at startup via `_lire_version()` and shown under the logout
+button as well as on the login page.
 
 Each route module is a standalone Blueprint with no shared Streamlit-style state.  
 HTMX polling (combat 2 s, wait-room 3 s, expedition 30 s) stops automatically when the

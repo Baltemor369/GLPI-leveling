@@ -30,9 +30,31 @@
     {% if sidebar_joueur %}
     <div class="sidebar-player">
       <div class="player-name">{{ sidebar_joueur.username }}</div>
-      <div class="player-level">Niveau {{ sidebar_joueur.level }}</div>
+      <div class="player-level">
+        Niveau {{ sidebar_joueur.level }}
+        {% if sidebar_joueur.points_a_attribuer > 0 %}
+        <span class="player-stat-badge"
+              title="{{ sidebar_joueur.points_a_attribuer }} point(s) de statistique à répartir">{{ sidebar_joueur.points_a_attribuer }}</span>
+        {% endif %}
+      </div>
+      <div class="player-xp-restant">{{ sidebar_xp_restant }} XP avant le niv. {{ sidebar_joueur.level + 1 }}</div>
       <div class="player-or">💰 {{ sidebar_joueur.or_monnaie }} or</div>
+
+      {% if sidebar_saison %}
+      <div class="player-saison">
+        <span class="saison-nom">Saison {{ sidebar_saison.numero }}</span>
+        <span class="saison-reset">
+          {%- if sidebar_reset_jours == 0 and sidebar_reset_heures == 0 -%}
+          moins d'1h restant
+          {%- else -%}
+          {{ sidebar_reset_jours }}j {{ sidebar_reset_heures }}h restant
+          {%- endif -%}
+        </span>
+      </div>
+      {% endif %}
+
       <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-secondary btn-block">Déconnexion</a>
+      <div class="player-version">v{{ app_version }}</div>
     </div>
     {% endif %}
   </aside>
