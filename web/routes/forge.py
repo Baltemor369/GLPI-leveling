@@ -188,6 +188,31 @@ def equiper(equip_id):
     return redirect(url_for("forge.index"))
 
 
+@forge_bp.route("/forge/desequiper/<int:equip_id>", methods=["POST"])
+@login_required
+def desequiper(equip_id):
+    joueur_id = session["joueur_id"]
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            # Le WHERE sur joueur_id garantit qu'un joueur ne déséquipe que ses
+            # propres objets (protection IDOR) ; RETURNING permet de détecter
+            # un id inconnu ou un objet déjà déséquipé.
+            cur.execute(
+                "UPDATE equipements SET equipe = FALSE "
+                "WHERE id = %s AND joueur_id = %s AND equipe = TRUE RETURNING id",
+                (equip_id, joueur_id),
+            )
+            if cur.fetchone() is None:
+                conn.rollback()
+                flash("Équipement introuvable ou déjà déséquipé.", "error")
+                return redirect(url_for("forge.index"))
+        conn.commit()
+    finally:
+        conn.close()
+    return redirect(url_for("forge.index"))
+
+
 @forge_bp.route("/forge/ameliorer/<int:equip_id>", methods=["POST"])
 @login_required
 def ameliorer(equip_id):

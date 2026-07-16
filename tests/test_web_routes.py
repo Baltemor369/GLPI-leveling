@@ -198,6 +198,7 @@ PROTECTED_POST = [
     "/arene/refuser/1",
     "/forge/acheter",
     "/forge/equiper/1",
+    "/forge/desequiper/1",
     "/forge/ameliorer/1",
     "/expedition/lancer",
     "/expedition/reclamer",
@@ -338,6 +339,41 @@ class TestForgeAcheter:
         assert "/forge" in resp.headers["Location"]
         conn.commit.assert_called_once()
         conn.rollback.assert_not_called()
+
+
+# ── /forge/desequiper ─────────────────────────────────────────────────────────
+
+class TestForgeDesequiper:
+    def test_successful_unequip_commits_and_redirects(self, auth_client):
+        # The conditional UPDATE matches an owned, currently-equipped item
+        # (RETURNING id -> a row) => commit, redirect to forge.
+        cur = MagicMock()
+        cur.fetchone.return_value = (42,)
+        conn = MagicMock()
+        conn.cursor.return_value.__enter__.return_value = cur
+
+        with patch("web.routes.forge.get_conn", return_value=conn):
+            resp = auth_client.post("/forge/desequiper/42")
+
+        assert resp.status_code == 302
+        assert "/forge" in resp.headers["Location"]
+        conn.commit.assert_called_once()
+        conn.rollback.assert_not_called()
+
+    def test_unknown_or_already_unequipped_rolls_back(self, auth_client):
+        # No matching row (foreign id, or already unequipped) => rollback, no commit.
+        cur = MagicMock()
+        cur.fetchone.return_value = None
+        conn = MagicMock()
+        conn.cursor.return_value.__enter__.return_value = cur
+
+        with patch("web.routes.forge.get_conn", return_value=conn):
+            resp = auth_client.post("/forge/desequiper/999")
+
+        assert resp.status_code == 302
+        assert "/forge" in resp.headers["Location"]
+        conn.rollback.assert_called_once()
+        conn.commit.assert_not_called()
 
 
 # ── /stat/depenser ────────────────────────────────────────────────────────────

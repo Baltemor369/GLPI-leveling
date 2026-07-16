@@ -63,7 +63,12 @@
   <div class="inv-stat">+{{ item.stat_totale }} {{ stat_labels.get(item.bonus_stat,'') }}</div>
   <div class="inv-equip">{% if item.equipe %}✅ Équipé{% else %}—{% endif %}</div>
   <div class="inv-btn">
-    {% if not item.equipe %}
+    {% if item.equipe %}
+    <form method="post" action="{{ url_for('forge.desequiper', equip_id=item.id) }}" style="display:inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-sm btn-secondary">Déséquiper</button>
+    </form>
+    {% else %}
     <form method="post" action="{{ url_for('forge.equiper', equip_id=item.id) }}" style="display:inline">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn btn-sm">Équiper</button>

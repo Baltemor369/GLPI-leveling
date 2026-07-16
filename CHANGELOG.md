@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.8.1] — 2026-07-16
+
+### Nouveautés
+- **Bouton « Déséquiper »** dans l'inventaire de l'Atelier : permet de retirer un composant
+  équipé (arme/sécurité/module), remettant l'emplacement à vide sans coût
+- Nouvelle route `POST /forge/desequiper/<id>` — protection IDOR (`WHERE joueur_id` +
+  `RETURNING id`), rollback si l'objet est introuvable ou déjà déséquipé
+- 2 nouveaux tests (`tests/test_web_routes.py`) — total 163 tests
+
 ## [1.8.0] — 2026-07-16
 
 ### Refonte thématique : médiéval → informatique
