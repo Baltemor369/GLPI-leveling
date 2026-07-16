@@ -15,7 +15,7 @@ NB_ROLLS     = 3
 PITY_SEUIL   = 10
 
 LOOT_TABLE = [
-    {"code": "or",              "nom": "Crédits",          "icone": "🪙", "poids": 38, "min": 5,  "max": 15},
+    {"code": "or",              "nom": "Crédits",          "icone": "💳", "poids": 38, "min": 5,  "max": 15},
     {"code": "bois_chene",      "nom": "Câble réseau",     "icone": "🔌", "poids": 28, "min": 2,  "max": 4},
     {"code": "minerai_fer",     "nom": "Silicium",         "icone": "🔩", "poids": 20, "min": 1,  "max": 3},
     {"code": "cristal_runique", "nom": "Circuit imprimé",  "icone": "🔷", "poids": 10, "min": 1,  "max": 2},

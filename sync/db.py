@@ -316,7 +316,7 @@ _BADGES_SEED = [
     ("premiere_quete",  "Hello World",         "Résoudre son 1er ticket",                               "🎯"),
     ("ecuyer",          "Stagiaire",           "Résoudre 10 tickets",                                   "🐣"),
     ("chevalier",       "Technicien",          "Résoudre 50 tickets",                                   "🔧"),
-    ("paladin",         "Ingénieur Système",   "Résoudre 100 tickets",                                  "🧑‍💻"),
+    ("paladin",         "Ingénieur Système",   "Résoudre 100 tickets",                                  "💻"),
     ("eclair",          "Hotfix",              "Résoudre un ticket le jour même (rapidité max)",        "⚡"),
     ("maitre_serveurs", "Maître des Serveurs", "Résoudre 10 tickets catégorie Serveur",                 "🖥️"),
     ("plume_or",        "Doc Parfaite",        "Créer un ticket avec score conformité 10/10",           "📝"),

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.8.3] — 2026-07-16
+
+### Correctifs
+- **Icône Crédits** : remplacement de 🪙 (Unicode 13.0, non rendu sur Windows 10) par **💳**
+  partout (sidebar, Poste, Atelier, mise du Benchmark, butin du Scan réseau, flash de vente)
+- Badge « Ingénieur Système » : 🧑‍💻 (séquence ZWJ non rendue sur Windows 10) → **💻**
+  (mis à jour en base via l'UPSERT du seed au démarrage)
+
 ## [1.8.2] — 2026-07-16
 
 ### Nouveautés

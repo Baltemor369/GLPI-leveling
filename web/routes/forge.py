@@ -247,7 +247,7 @@ def vendre(equip_id):
                 (refund, joueur_id),
             )
         conn.commit()  # commit unique : suppression équipement + crédit
-        flash(f"🪙 {nom} vendu pour {refund} crédits.", "success")
+        flash(f"💳 {nom} vendu pour {refund} crédits.", "success")
     finally:
         conn.close()
     return redirect(url_for("forge.index"))
