@@ -199,6 +199,7 @@ PROTECTED_POST = [
     "/forge/acheter",
     "/forge/equiper/1",
     "/forge/desequiper/1",
+    "/forge/vendre/1",
     "/forge/ameliorer/1",
     "/expedition/lancer",
     "/expedition/reclamer",
@@ -369,6 +370,44 @@ class TestForgeDesequiper:
 
         with patch("web.routes.forge.get_conn", return_value=conn):
             resp = auth_client.post("/forge/desequiper/999")
+
+        assert resp.status_code == 302
+        assert "/forge" in resp.headers["Location"]
+        conn.rollback.assert_called_once()
+        conn.commit.assert_not_called()
+
+
+# ── /forge/vendre ─────────────────────────────────────────────────────────────
+
+class TestForgeVendre:
+    def test_successful_sale_refunds_and_commits(self, auth_client):
+        # DELETE matches an owned row (RETURNING nom, cout_base) => refund is
+        # credited (50% of cout_base) and the transaction commits.
+        cur = MagicMock()
+        cur.fetchone.return_value = ("Core i5", 250)
+        conn = MagicMock()
+        conn.cursor.return_value.__enter__.return_value = cur
+
+        with patch("web.routes.forge.get_conn", return_value=conn):
+            resp = auth_client.post("/forge/vendre/7")
+
+        assert resp.status_code == 302
+        assert "/forge" in resp.headers["Location"]
+        conn.commit.assert_called_once()
+        conn.rollback.assert_not_called()
+        # Second execute is the credit UPDATE: refund == round(250 * 0.5) == 125.
+        update_args = cur.execute.call_args_list[1].args
+        assert update_args[1][0] == 125
+
+    def test_unknown_item_rolls_back(self, auth_client):
+        # No matching row (foreign id or already sold) => rollback, no commit.
+        cur = MagicMock()
+        cur.fetchone.return_value = None
+        conn = MagicMock()
+        conn.cursor.return_value.__enter__.return_value = cur
+
+        with patch("web.routes.forge.get_conn", return_value=conn):
+            resp = auth_client.post("/forge/vendre/999")
 
         assert resp.status_code == 302
         assert "/forge" in resp.headers["Location"]

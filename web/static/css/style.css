@@ -553,6 +553,7 @@ input[type="number"].form-input { -moz-appearance: textfield; }
 .inv-equip { flex: 1; text-align: center; color: #7fbf7f; }
 .inv-btn   { flex: 1; text-align: center; }
 .inv-upg   { flex: 2; text-align: right; }
+.inv-sell  { flex: 1; text-align: right; }
 
 /* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 900px) {

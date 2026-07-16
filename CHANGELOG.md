@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.8.2] — 2026-07-16
+
+### Nouveautés
+- **Revente d'objets** dans l'inventaire de l'Atelier : bouton « Vendre » sur chaque composant,
+  avec popup de confirmation. Rembourse **50% du coût de base** (plancher 1 crédit), quel que
+  soit le niveau d'amélioration
+- Nouvelle route `POST /forge/vendre/<id>` — protection IDOR (`DELETE ... WHERE joueur_id
+  RETURNING`), remboursement recalculé côté serveur et crédité dans la même transaction ;
+  vendre libère l'emplacement même si l'objet était équipé
+- Helper `prix_revente(cout_base)` (source unique vue + route)
+- 2 nouveaux tests (`tests/test_web_routes.py`) — total 166 tests
+
 ## [1.8.1] — 2026-07-16
 
 ### Nouveautés

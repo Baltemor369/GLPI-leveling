@@ -40,6 +40,12 @@ MAT_NOMS    = {"bois_chene": "🔌 Câble réseau", "minerai_fer": "🔩 Siliciu
 COUT_UPGRADE_RATIO = 0.6
 REMISE_BOIS        = 0.7
 AMELIORATION_MAX   = 20
+# Revente : rembourse 50% du coût de base (les améliorations ne sont pas valorisées).
+PRIX_REVENTE_RATIO = 0.5
+
+
+def prix_revente(cout_base: int) -> int:
+    return max(1, round((cout_base or 0) * PRIX_REVENTE_RATIO))
 
 
 def cout_amelioration(cout_base: int, amelioration: int, a_bois: bool) -> int:
@@ -87,6 +93,7 @@ def index():
             "cout_upgrade":   cout_upgrade,
             "peut_ameliorer": joueur["or_monnaie"] >= cout_upgrade and amelioration < AMELIORATION_MAX,
             "bois_remise":    a_bois,
+            "prix_revente":   prix_revente(cout_base),
         })
 
     return render_template(
@@ -208,6 +215,39 @@ def desequiper(equip_id):
                 flash("Équipement introuvable ou déjà déséquipé.", "error")
                 return redirect(url_for("forge.index"))
         conn.commit()
+    finally:
+        conn.close()
+    return redirect(url_for("forge.index"))
+
+
+@forge_bp.route("/forge/vendre/<int:equip_id>", methods=["POST"])
+@login_required
+def vendre(equip_id):
+    joueur_id = session["joueur_id"]
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            # DELETE avec garde d'ownership (IDOR) ; RETURNING donne le coût de
+            # base pour recalculer le remboursement côté serveur. Supprimer la
+            # ligne libère l'emplacement même si l'objet était équipé.
+            cur.execute(
+                "DELETE FROM equipements WHERE id = %s AND joueur_id = %s "
+                "RETURNING nom, cout_base",
+                (equip_id, joueur_id),
+            )
+            row = cur.fetchone()
+            if row is None:
+                conn.rollback()
+                flash("Équipement introuvable.", "error")
+                return redirect(url_for("forge.index"))
+            nom, cout_base = row
+            refund = prix_revente(cout_base)
+            cur.execute(
+                "UPDATE joueurs SET or_monnaie = or_monnaie + %s WHERE id = %s",
+                (refund, joueur_id),
+            )
+        conn.commit()  # commit unique : suppression équipement + crédit
+        flash(f"🪙 {nom} vendu pour {refund} crédits.", "success")
     finally:
         conn.close()
     return redirect(url_for("forge.index"))

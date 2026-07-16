@@ -88,6 +88,13 @@
     <span style="color:var(--or)">MAX</span>
     {% endif %}
   </div>
+  <div class="inv-sell">
+    <form method="post" action="{{ url_for('forge.vendre', equip_id=item.id) }}" style="display:inline"
+          onsubmit="return confirm('Vendre {{ item.nom }}{% if item.amelioration %} +{{ item.amelioration }}{% endif %} pour {{ item.prix_revente }} crédits ?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-sm btn-danger">Vendre 🪙{{ item.prix_revente }}</button>
+    </form>
+  </div>
 </div>
 {% endfor %}
 {% endif %}
