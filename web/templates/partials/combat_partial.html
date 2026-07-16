@@ -7,14 +7,14 @@
 
 {% if nouveaux_badges is defined and nouveaux_badges %}
 {% for code in nouveaux_badges %}
-<div class="flash-msg success">🏅 Badge débloqué : {{ code }} !</div>
+<div class="flash-msg success">🎖️ Certification débloquée : {{ code }} !</div>
 {% endfor %}
 {% endif %}
 
-<h2>⚔️ Combat en cours !</h2>
+<h2>⚡ Duel en cours !</h2>
 {% if c.mise > 0 %}
 <div style="text-align:center;color:var(--or);margin-bottom:12px">
-  💰 Mise : {{ c.mise }} or chacun — Pot : <strong>{{ c.mise * 2 }} or</strong>
+  🪙 Mise : {{ c.mise }} crédits chacun — Pot : <strong>{{ c.mise * 2 }} crédits</strong>
 </div>
 {% endif %}
 <hr>
@@ -33,7 +33,7 @@
         <div class="pv-bar-fill" style="background:{{ color_att }};width:{{ pct_att }}%"></div>
       </div>
     </div>
-    <div style="font-size:0.8rem;color:var(--gris)">⚔ {{ att_for }} &nbsp;|&nbsp; 🛡 {{ att_res }} &nbsp;|&nbsp; ⚡ {{ att_agi }}</div>
+    <div style="font-size:0.8rem;color:var(--gris)">⚡ {{ att_for }} &nbsp;|&nbsp; 🛡 {{ att_res }} &nbsp;|&nbsp; 📶 {{ att_agi }}</div>
     <div style="font-size:0.75rem;color:#6ab0e8;margin-top:4px">
       Esquive : {{ "%.0f"|format(chance_esquive(att_agi, def_for, att_j.level, att_eq) * 100) }}%
     </div>
@@ -52,7 +52,7 @@
         <div class="pv-bar-fill" style="background:{{ color_def }};width:{{ pct_def }}%"></div>
       </div>
     </div>
-    <div style="font-size:0.8rem;color:var(--gris)">⚔ {{ def_for }} &nbsp;|&nbsp; 🛡 {{ def_res }} &nbsp;|&nbsp; ⚡ {{ def_agi }}</div>
+    <div style="font-size:0.8rem;color:var(--gris)">⚡ {{ def_for }} &nbsp;|&nbsp; 🛡 {{ def_res }} &nbsp;|&nbsp; 📶 {{ def_agi }}</div>
     <div style="font-size:0.75rem;color:#6ab0e8;margin-top:4px">
       Esquive : {{ "%.0f"|format(chance_esquive(def_agi, att_for, def_j.level, def_eq) * 100) }}%
     </div>
@@ -86,7 +86,7 @@
 <div class="flash-msg info">⏳ En attente du tour de <strong>{{ adversaire | e }}</strong>...</div>
 {% endif %}
 
-<h3>📜 Journal de combat</h3>
+<h3>📋 Journal du duel</h3>
 {% for ligne in lignes %}{% if ligne.strip() %}
 <div class="ticket-row">{{ ligne | e }}</div>
 {% endif %}{% endfor %}

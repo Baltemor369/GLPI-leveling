@@ -3,7 +3,7 @@
 
 {% block content %}
 <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap">
-  <h1 style="margin:0">🏆 Classement des Aventuriers</h1>
+  <h1 style="margin:0">🏆 Classement des Opérateurs</h1>
   {% if saison %}
   <span style="color:var(--or-clair);font-size:0.9rem;opacity:0.8">Saison {{ saison.numero }}</span>
   {% endif %}
@@ -13,19 +13,19 @@
 <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:2px solid rgba(138,106,26,0.3);padding-bottom:0">
   <a href="{{ url_for('classement.index', tab='xp') }}"
      style="padding:8px 20px;text-decoration:none;border-radius:6px 6px 0 0;font-weight:bold;
-            {% if tab == 'xp' %}background:var(--or);color:#1a1006{% else %}color:var(--gris);background:rgba(138,106,26,0.1){% endif %}">
+            {% if tab == 'xp' %}background:var(--or);color:#0a0f1c{% else %}color:var(--gris);background:rgba(53,197,240,0.1){% endif %}">
     ⭐ XP
   </a>
   <a href="{{ url_for('classement.index', tab='pc') }}"
      style="padding:8px 20px;text-decoration:none;border-radius:6px 6px 0 0;font-weight:bold;
-            {% if tab == 'pc' %}background:var(--or);color:#1a1006{% else %}color:var(--gris);background:rgba(138,106,26,0.1){% endif %}">
-    ⚔️ Points de Combat
+            {% if tab == 'pc' %}background:var(--or);color:#0a0f1c{% else %}color:var(--gris);background:rgba(53,197,240,0.1){% endif %}">
+    ⚡ Benchmark
   </a>
 </div>
 
 {% if mon_rang %}
 <div style="text-align:right;color:var(--or);font-size:0.85rem;margin-top:-8px;margin-bottom:14px">
-  Votre position : <strong>#{{ mon_rang }}</strong> sur {{ joueurs|length }} aventuriers
+  Votre position : <strong>#{{ mon_rang }}</strong> sur {{ joueurs|length }} opérateurs
 </div>
 {% endif %}
 
@@ -52,7 +52,7 @@
   {% if tab == 'pc' %}
 
   <div class="rank-xp" style="color:#6ab0e8">🏆 {{ j.points_combat }} PC</div>
-  <div class="rank-vic">⚔️ {{ j.victoires }} vic.</div>
+  <div class="rank-vic">⚡ {{ j.victoires }} vic.</div>
   <div class="rank-bar" style="min-width:80px">
     <div class="xp-bar-bg" style="height:12px;margin:0;background:rgba(106,176,232,0.15)">
       {% set max_pc = joueurs[0].points_combat %}
@@ -70,7 +70,7 @@
   {% set pct = [100, raw_pct] | min %}
 
   <div class="rank-xp">⭐ {{ j.xp }} XP</div>
-  <div class="rank-vic">⚔️ {{ j.victoires }}</div>
+  <div class="rank-vic">⚡ {{ j.victoires }}</div>
   <div class="rank-bar" style="min-width:80px">
     <div class="xp-bar-bg" style="height:12px;margin:0">
       <div class="xp-bar-fill" style="width:{{ pct }}%"></div>

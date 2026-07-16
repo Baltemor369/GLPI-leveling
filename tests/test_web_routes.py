@@ -284,7 +284,7 @@ class TestForgeAcheter:
 
     def test_insufficient_gold_rolls_back_and_redirects(self, auth_client):
         # Tier-1 item (no materials). The conditional UPDATE matches no row
-        # (fetchone -> None) => rollback + "Or insuffisant." flash.
+        # (fetchone -> None) => rollback + "Crédits insuffisants." flash.
         cur = MagicMock()
         cur.fetchone.return_value = None
         conn = MagicMock()
@@ -292,7 +292,7 @@ class TestForgeAcheter:
 
         with patch("web.routes.forge.get_conn", return_value=conn):
             resp = auth_client.post(
-                "/forge/acheter", data={"nom": "Épée en Fer"}
+                "/forge/acheter", data={"nom": "Pentium I"}
             )
 
         assert resp.status_code == 302
@@ -305,7 +305,7 @@ class TestForgeAcheter:
              patch("web.routes.forge.get_materiaux", return_value={}), \
              patch("web.queries.get_equipements", return_value=[]):
             resp2 = auth_client.get("/forge")
-        assert "Or insuffisant." in resp2.get_data(as_text=True)
+        assert "Crédits insuffisants." in resp2.get_data(as_text=True)
 
     def test_insufficient_materials_blocks_before_write(self, auth_client):
         # Tier-3 item requires minerai_fer x3; stock is empty -> early redirect,
@@ -314,7 +314,7 @@ class TestForgeAcheter:
         with patch("web.routes.forge.get_conn", return_value=conn), \
              patch("web.routes.forge.get_materiaux", return_value={"minerai_fer": 0}):
             resp = auth_client.post(
-                "/forge/acheter", data={"nom": "Épée de Mithril"}
+                "/forge/acheter", data={"nom": "Core i5"}
             )
         assert resp.status_code == 302
         assert "/forge" in resp.headers["Location"]
@@ -331,7 +331,7 @@ class TestForgeAcheter:
              patch("web.routes.forge.badge_engine") as mock_badge:
             mock_badge.verifier_badges_forge.return_value = []
             resp = auth_client.post(
-                "/forge/acheter", data={"nom": "Épée en Fer"}
+                "/forge/acheter", data={"nom": "Pentium I"}
             )
 
         assert resp.status_code == 302
@@ -393,7 +393,7 @@ class TestClassement:
             resp = auth_client.get("/classement?tab=pc")
         assert resp.status_code == 200
         mock_pc.assert_called_once()
-        assert "Points de Combat".encode() in resp.data
+        assert "Benchmark".encode() in resp.data
 
     def test_invalid_tab_falls_back_to_xp(self, auth_client):
         with patch("web.routes.classement.queries.tous_les_joueurs", return_value=JOUEURS_MOCK) as mock_xp:

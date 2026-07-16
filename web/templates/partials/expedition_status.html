@@ -1,4 +1,4 @@
-<!-- Statut expédition — div avec polling outerHTML -->
+<!-- Statut scan réseau — div avec polling outerHTML -->
 <div id="expedition-status"
      hx-get="{{ url_for('expedition.status') }}"
      hx-trigger="every 30s"
@@ -6,22 +6,22 @@
      hx-swap="outerHTML">
 
 {% if status.statut == 'aucune' %}
-<h3>Aucune expédition en cours</h3>
+<h3>Aucun scan en cours</h3>
 <form method="post" action="{{ url_for('expedition.lancer') }}">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <button type="submit" class="btn" style="margin-top:8px">🗺️ Partir en expédition (2h)</button>
+  <button type="submit" class="btn" style="margin-top:8px">📡 Lancer un scan (2h)</button>
 </form>
 
 {% elif status.statut == 'terminee' %}
-<h3>✅ Expédition terminée !</h3>
-<p style="margin-bottom:12px">Votre équipe est de retour. Réclamez votre butin !</p>
+<h3>✅ Scan terminé !</h3>
+<p style="margin-bottom:12px">Le scan est terminé. Récupérez les données !</p>
 <form method="post" action="{{ url_for('expedition.reclamer') }}">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <button type="submit" class="btn">🎁 Réclamer les récompenses</button>
+  <button type="submit" class="btn">🎁 Récupérer les données</button>
 </form>
 
 {% elif status.statut == 'en_cours' %}
-<h3>⏳ Expédition en cours — {{ status.timer }} restant</h3>
+<h3>⏳ Scan en cours — {{ status.timer }} restant</h3>
 <div class="progress-bar-bg">
   <div class="progress-bar-fill" style="width:{{ '%.1f'|format(status.pct) }}%"></div>
 </div>

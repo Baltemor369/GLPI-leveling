@@ -1,23 +1,23 @@
 {% extends 'base.html' %}
-{% block title %}Forge — GlpiLeveling{% endblock %}
+{% block title %}Atelier — GlpiLeveling{% endblock %}
 
 {% block content %}
-<h1>🔨 La Forge</h1>
+<h1>🔧 Atelier d'assemblage</h1>
 <p style="color:var(--gris);font-style:italic;margin-top:-8px;margin-bottom:16px">
-  Dépense ton or pour forger des équipements et renforcer ton aventurier.
+  Dépense tes crédits pour assembler des composants et renforcer ton poste.
 </p>
 
 <!-- Ressources -->
 <div class="grid-5" style="margin-bottom:20px">
-  <div class="metric-card"><div class="metric-label">💰 Or</div><div class="metric-value">{{ joueur.or_monnaie }}</div></div>
-  <div class="metric-card"><div class="metric-label">🌲 Bois de Chêne</div><div class="metric-value">{{ stock.get('bois_chene',0) }}</div></div>
-  <div class="metric-card"><div class="metric-label">⚙️ Minerai de Fer</div><div class="metric-value">{{ stock.get('minerai_fer',0) }}</div></div>
-  <div class="metric-card"><div class="metric-label">💎 Cristal Runique</div><div class="metric-value">{{ stock.get('cristal_runique',0) }}</div></div>
-  <div class="metric-card"><div class="metric-label">✨ Essence du Néant</div><div class="metric-value">{{ stock.get('essence_neant',0) }}</div></div>
+  <div class="metric-card"><div class="metric-label">🪙 Crédits</div><div class="metric-value">{{ joueur.or_monnaie }}</div></div>
+  <div class="metric-card"><div class="metric-label">🔌 Câble réseau</div><div class="metric-value">{{ stock.get('bois_chene',0) }}</div></div>
+  <div class="metric-card"><div class="metric-label">🔩 Silicium</div><div class="metric-value">{{ stock.get('minerai_fer',0) }}</div></div>
+  <div class="metric-card"><div class="metric-label">🔷 Circuit imprimé</div><div class="metric-value">{{ stock.get('cristal_runique',0) }}</div></div>
+  <div class="metric-card"><div class="metric-label">⚛️ Qubit</div><div class="metric-value">{{ stock.get('essence_neant',0) }}</div></div>
 </div>
 <hr>
 
-{% for type_key, type_label in [('arme','⚔️ Armes'),('armure','🛡️ Armures'),('amul','📿 Amulettes')] %}
+{% for type_key, type_label in [('arme','⚡ Processeurs'),('armure','🔒 Sécurité'),('amul','🧩 Modules')] %}
 <h3 style="margin-top:{% if loop.first %}0{% else %}32px{% endif %}">{{ type_label }}</h3>
 <div class="grid-5" style="margin-bottom:20px">
   {% for item in catalogue if item.type == type_key %}
@@ -28,7 +28,7 @@
       </div>
       <div class="stat-label" style="margin:4px 0">{{ item.nom }}</div>
       <div style="color:var(--parchemin);font-size:0.9rem">+{{ item.valeur_bonus }} {{ stat_labels[item.bonus_stat] }}</div>
-      <div style="color:var(--or);margin-top:6px">💰 {{ item.cout }}</div>
+      <div style="color:var(--or);margin-top:6px">🪙 {{ item.cout }}</div>
       {% for code, qty in item.mat_requis.items() %}
       <div style="color:#6ab0e8;font-size:0.7rem">{{ mat_noms[code] }} ×{{ qty }}</div>
       {% endfor %}
@@ -41,7 +41,7 @@
       <input type="hidden" name="nom" value="{{ item.nom }}">
       <button type="submit" class="btn btn-block btn-sm"
               {% if not item.peut_acheter %}disabled{% endif %}>
-        Forger
+        Assembler
       </button>
     </form>
   </div>
@@ -53,7 +53,7 @@
 <!-- Inventory -->
 <h3>🎒 Inventaire & Améliorations</h3>
 {% if not inventaire %}
-<p style="color:var(--gris);font-style:italic">Ton inventaire est vide. Forge ton premier équipement !</p>
+<p style="color:var(--gris);font-style:italic">Ton inventaire est vide. Assemble ton premier composant !</p>
 {% else %}
 {% for item in inventaire %}
 <div class="inv-row">
@@ -76,7 +76,7 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn btn-sm"
               {% if not item.peut_ameliorer %}disabled{% endif %}>
-        ⬆ +{{ item.amelioration + 1 }} (💰{{ item.cout_upgrade }}{% if item.bois_remise %} 🌲-30%{% endif %})
+        ⬆ +{{ item.amelioration + 1 }} (🪙{{ item.cout_upgrade }}{% if item.bois_remise %} 🔌-30%{% endif %})
       </button>
     </form>
     {% else %}

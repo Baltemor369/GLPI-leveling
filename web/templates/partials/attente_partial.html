@@ -6,16 +6,16 @@
      hx-swap="outerHTML">
 
 {% if est_defenseur %}
-<h2>⚔️ Défi reçu de <strong>{{ c.nom_attaquant | e }}</strong> !</h2>
+<h2>⚡ Défi reçu de <strong>{{ c.nom_attaquant | e }}</strong> !</h2>
 <p style="margin-bottom:16px">
-  {{ c.nom_attaquant | e }} te défie en combat
-  {% if c.mise > 0 %} — Mise : <strong>{{ c.mise }} or</strong> chacun (pot : {{ c.mise * 2 }} or){% endif %}.
+  {{ c.nom_attaquant | e }} te défie en duel
+  {% if c.mise > 0 %} — Mise : <strong>{{ c.mise }} crédits</strong> chacun (pot : {{ c.mise * 2 }} crédits){% endif %}.
   Acceptes-tu ?
 </p>
 <div style="display:flex;gap:12px">
   <form method="post" action="{{ url_for('arene.accepter', combat_id=c.id) }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit" class="btn">✅ Accepter le combat</button>
+    <button type="submit" class="btn">✅ Accepter le duel</button>
   </form>
   <form method="post" action="{{ url_for('arene.refuser', combat_id=c.id) }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

@@ -15,11 +15,11 @@ NB_ROLLS     = 3
 PITY_SEUIL   = 10
 
 LOOT_TABLE = [
-    {"code": "or",              "nom": "Or",               "icone": "💰", "poids": 38, "min": 5,  "max": 15},
-    {"code": "bois_chene",      "nom": "Bois de Chêne",    "icone": "🌲", "poids": 28, "min": 2,  "max": 4},
-    {"code": "minerai_fer",     "nom": "Minerai de Fer",   "icone": "⚙️", "poids": 20, "min": 1,  "max": 3},
-    {"code": "cristal_runique", "nom": "Cristal Runique",  "icone": "💎", "poids": 10, "min": 1,  "max": 2},
-    {"code": "essence_neant",   "nom": "Essence du Néant", "icone": "✨", "poids": 4,  "min": 1,  "max": 1},
+    {"code": "or",              "nom": "Crédits",          "icone": "🪙", "poids": 38, "min": 5,  "max": 15},
+    {"code": "bois_chene",      "nom": "Câble réseau",     "icone": "🔌", "poids": 28, "min": 2,  "max": 4},
+    {"code": "minerai_fer",     "nom": "Silicium",         "icone": "🔩", "poids": 20, "min": 1,  "max": 3},
+    {"code": "cristal_runique", "nom": "Circuit imprimé",  "icone": "🔷", "poids": 10, "min": 1,  "max": 2},
+    {"code": "essence_neant",   "nom": "Qubit",            "icone": "⚛️", "poids": 4,  "min": 1,  "max": 1},
 ]
 _POIDS   = [i["poids"] for i in LOOT_TABLE]
 _ESSENCE = next(i for i in LOOT_TABLE if i["code"] == "essence_neant")
@@ -143,7 +143,7 @@ def lancer():
     conn = get_conn()
     try:
         lancer_expedition(conn, joueur_id, DUREE_HEURES)
-        flash("Expédition lancée ! Revenez dans 2 heures.", "success")
+        flash("Scan réseau lancé ! Revenez dans 2 heures.", "success")
     finally:
         conn.close()
     return redirect(url_for("expedition.index"))
@@ -157,7 +157,7 @@ def reclamer():
     try:
         expedition = get_expedition_active(conn, joueur_id)
         if not expedition:
-            flash("Aucune expédition en cours.", "error")
+            flash("Aucun scan en cours.", "error")
             return redirect(url_for("expedition.index"))
 
         pity = _get_pity(conn, joueur_id)
@@ -166,7 +166,7 @@ def reclamer():
 
         if not marquer_reclamee(conn, expedition["id"]):
             conn.rollback()
-            flash("Cette expédition a déjà été réclamée.", "warning")
+            flash("Ce scan a déjà été réclamé.", "warning")
             return redirect(url_for("expedition.index"))
 
         for item in butin:
@@ -190,12 +190,12 @@ def reclamer():
     finally:
         conn.close()
 
-    flash("🎉 Expédition terminée ! Voici votre butin :", "success")
+    flash("🎉 Scan terminé ! Voici les données récupérées :", "success")
     if pity_info == "garanti":
-        flash("✨ Pity activé — Essence du Néant garantie !", "info")
+        flash("⚛️ Pity activé — Qubit garanti !", "info")
     for item in butin:
         flash(f"{item['icone']} {item['nom']} +{item['quantite']}", "loot")
     for code in nouveaux_badges:
-        flash(f"🏅 Badge débloqué : {code} !", "success")
+        flash(f"🎖️ Certification débloquée : {code} !", "success")
 
     return redirect(url_for("expedition.index"))

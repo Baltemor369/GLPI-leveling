@@ -1,7 +1,7 @@
 # GlpiLeveling
 
-Turn your GLPI helpdesk into a medieval RPG for your technicians.  
-Every closed ticket earns XP, levels up your character and unlocks equipment, badges and PvP fights.
+Turn your GLPI helpdesk into an IT-themed RPG for your technicians.  
+Every closed ticket earns XP, levels up your operator and unlocks hardware components, certifications and PvP benchmarks.
 
 ---
 
@@ -22,14 +22,14 @@ Every closed ticket earns XP, levels up your character and unlocks equipment, ba
 
 | Module | Description |
 |---|---|
-| **Adventurer** | RPG profile per technician — XP, level, stats (Strength / Constitution / Agility / Spirit) |
-| **Forge** | 15 items across 5 tiers (weapons, armors, amulets) with passives and upgrades +1→+20 |
-| **Arena** | Turn-based PvP combat with dodge, passives and gold betting |
-| **Expedition** | 2-hour mission with weighted loot (3 rolls per expedition, pity guaranteed at 10 runs) |
-| **Badges** | 20 unlockable achievements (tickets, combat, forge, levels) |
-| **Leaderboard** | Technician ranking by XP / level / combat wins |
-| **Sidebar** | Live player panel: XP remaining before next level, gold, current season + monthly reset countdown, unallocated stat-point badge, and the app version |
-| **Worker** | Automatic GLPI sync — awards XP and badges on every closed ticket |
+| **Workstation** (*Poste*) | Operator profile per technician — XP, level, stats (CPU / RAM / Throughput / Firewall) |
+| **Workshop** (*Atelier*) | 15 components across 5 tiers (processors, security, modules) with passives and upgrades +1→+20 |
+| **Benchmark** | Turn-based PvP combat with dodge, passives and credit betting |
+| **Network Scan** (*Scan réseau*) | 2-hour mission with weighted loot (3 rolls per scan, pity guaranteed at 10 runs) |
+| **Certifications** | 20 unlockable achievements (tickets, combat, assembly, levels) |
+| **Leaderboard** (*Classement*) | Technician ranking by XP / level / combat wins |
+| **Sidebar** | Live player panel: XP remaining before next level, credits, current season + monthly reset countdown, unallocated stat-point badge, and the app version |
+| **Worker** | Automatic GLPI sync — awards XP and certifications on every closed ticket |
 
 ---
 
@@ -72,26 +72,26 @@ web/
 ├── queries.py          # Read/write DB layer used by all blueprints
 ├── routes/
 │   ├── auth.py         # /login, /logout
-│   ├── aventurier.py   # / (profile, stat allocation)
-│   ├── classement.py   # /classement
-│   ├── journal.py      # /journal (ticket history)
-│   ├── forge.py        # /forge (buy, equip, upgrade items)
-│   ├── arene.py        # /arene (PvP lobby, combat, HTMX polling)
-│   ├── expedition.py   # /expedition (launch, loot, HTMX polling)
-│   └── badges.py       # /badges
+│   ├── aventurier.py   # / (Workstation profile, stat allocation)
+│   ├── classement.py   # /classement (Leaderboard)
+│   ├── journal.py      # /journal (Logs — ticket history)
+│   ├── forge.py        # /forge (Workshop — buy, equip, upgrade components)
+│   ├── arene.py        # /arene (Benchmark — PvP lobby, combat, HTMX polling)
+│   ├── expedition.py   # /expedition (Network scan — launch, loot, HTMX polling)
+│   └── badges.py       # /badges (Certifications)
 ├── templates/          # Jinja2 templates (base.html + per-page)
 │   ├── base.html       # Layout + sidebar (player panel, season countdown, version)
 │   ├── login.html      # Login page (also displays the app version)
 │   ├── partials/       # HTMX partial responses (combat, expedition, wait-room)
 │   └── arene/
 └── static/css/
-    └── style.css       # Dark-fantasy CSS theme
+    └── style.css       # Dark terminal CSS theme (slate / cyan, monospace)
 ```
 
 The sidebar in `base.html` is fed by two context processors in `app.py`
 (`inject_version`, `inject_sidebar`). For a connected player it shows the XP
 remaining before the next level, a red badge with unallocated stat points, the
-gold balance, the current season number and a countdown to the monthly reset
+credits balance, the current season number and a countdown to the monthly reset
 (1st of each month at 00:00 UTC). The application version comes from the
 `VERSION` file at the repository root — the **single source of truth** for the
 version — read once at startup via `_lire_version()` and shown under the logout
@@ -108,8 +108,8 @@ sync/
 ├── worker.py           # Main polling loop (SYNC_INTERVAL_SECONDS)
 ├── glpi_client.py      # GLPI REST API wrapper
 ├── xp_engine.py        # XP formula (category × urgency × impact × difficulty × speed)
-├── badge_engine.py     # Badge unlock logic
-├── combat_engine.py    # Turn-based PvP resolution
+├── badge_engine.py     # Certification unlock logic
+├── combat_engine.py    # Turn-based PvP (Benchmark) resolution
 ├── ollama_client.py    # LLM difficulty / compliance scoring
 ├── db.py               # DB helpers shared by worker and blueprints
 └── config.py           # Env-var loading (imported by both layers)
@@ -303,22 +303,23 @@ The technician who created the ticket also receives **compliance XP** based on t
 
 ### Leveling up
 
-Each level grants **3 stat points** to freely distribute across Strength, Constitution, Agility and Spirit.
+Each level grants **3 stat points** to freely distribute across CPU, RAM, Throughput and Firewall.
 
-### Forge
+### Workshop (*Atelier*)
 
-- 15 items across 5 tiers (Iron → Steel → Mithril → Runic → Void)
-- Tiers 3–5 require materials obtained from expeditions
-- Upgrades +1 to +20: cost = `tier_price × (level + 1) × 0.6` (−30% if Oak Wood is in stock)
+- 15 components across 5 tiers, from Legacy (tier 1) to Quantum (tier 5)
+- Component families: processors (Pentium I → Core i3 → Core i5 → Core i7 → CPU Quantique), security (Pare-feu basique → Antivirus → Chiffrement AES → IDS/IPS → Zero Trust), modules (Barrette RAM → Carte réseau → SSD NVMe → Fibre optique → Cœur IA)
+- Tiers 3–5 require materials obtained from network scans
+- Upgrades +1 to +20: cost = `tier_price × (level + 1) × 0.6` (−30% if Network cable is in stock)
 
-### Expedition (2h)
+### Network scan (2h)
 
-- 3 weighted rolls per expedition (Gold 38%, Wood 28%, Iron Ore 20%, Runic Crystal 10%, Void Essence 4%)
-- Pity system: guarantees a Void Essence after 10 expeditions without obtaining one
+- 3 weighted rolls per scan (Credits 38%, Network cable 28%, Silicon 20%, Printed circuit 10%, Qubit 4%)
+- Pity system: guarantees a Qubit after 10 scans without obtaining one
 
-### PvP Arena
+### PvP Benchmark
 
-- Turn-based combat with optional gold bets
-- Dodge chance based on defender's Agility vs attacker's Strength
+- Turn-based combat with optional credit bets
+- Dodge chance based on defender's Throughput vs attacker's CPU
 - 3 attack types with speed penalties (Quick 0%, Heavy −20%, Critical −40%)
 - Combat Elo points (`points_combat`) track competitive standing independently of XP

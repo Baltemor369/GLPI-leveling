@@ -192,6 +192,26 @@ MIGRATIONS = [
     CREATE UNIQUE INDEX IF NOT EXISTS saisons_unique_en_cours
         ON saisons (statut) WHERE statut = 'en_cours';
     """,
+    # 9 — re-thématisation informatique : renomme les équipements déjà en base
+    # (thème médiéval → composants matériels). Les colonnes internes
+    # (type, bonus_stat, passif_code, tier) restent inchangées.
+    """
+    UPDATE equipements SET nom = 'Pentium I'         WHERE nom = 'Épée en Fer';
+    UPDATE equipements SET nom = 'Core i3'           WHERE nom = 'Lame d''Acier';
+    UPDATE equipements SET nom = 'Core i5'           WHERE nom = 'Épée de Mithril';
+    UPDATE equipements SET nom = 'Core i7'           WHERE nom = 'Lame Runique';
+    UPDATE equipements SET nom = 'CPU Quantique'     WHERE nom = 'Épée du Néant';
+    UPDATE equipements SET nom = 'Pare-feu basique'  WHERE nom = 'Tunique de Cuir';
+    UPDATE equipements SET nom = 'Antivirus'         WHERE nom = 'Cotte de Mailles';
+    UPDATE equipements SET nom = 'Chiffrement AES'   WHERE nom = 'Armure de Plates';
+    UPDATE equipements SET nom = 'IDS/IPS'           WHERE nom = 'Armure Runique';
+    UPDATE equipements SET nom = 'Zero Trust'        WHERE nom = 'Armure du Néant';
+    UPDATE equipements SET nom = 'Barrette RAM'      WHERE nom = 'Amulette de Vitalité';
+    UPDATE equipements SET nom = 'Carte réseau'      WHERE nom = 'Bague de Célérité';
+    UPDATE equipements SET nom = 'SSD NVMe'          WHERE nom = 'Pendentif de l''Aube';
+    UPDATE equipements SET nom = 'Fibre optique'     WHERE nom = 'Talisman Runique';
+    UPDATE equipements SET nom = 'Cœur IA'           WHERE nom = 'Orbe du Néant';
+    """,
 ]
 
 
@@ -293,48 +313,58 @@ def ticket_deja_traite(conn, ticket_id: int) -> bool:
 # ---------------------------------------------------------------------------
 
 _BADGES_SEED = [
-    ("premiere_quete",  "Première Quête",      "Résoudre son 1er ticket",                               "🎯"),
-    ("ecuyer",          "Écuyer",              "Résoudre 10 tickets",                                   "⚔️"),
-    ("chevalier",       "Chevalier",           "Résoudre 50 tickets",                                   "🛡️"),
-    ("paladin",         "Paladin",             "Résoudre 100 tickets",                                  "👑"),
-    ("eclair",          "Éclair",              "Résoudre un ticket le jour même (rapidité max)",        "⚡"),
+    ("premiere_quete",  "Hello World",         "Résoudre son 1er ticket",                               "🎯"),
+    ("ecuyer",          "Stagiaire",           "Résoudre 10 tickets",                                   "🐣"),
+    ("chevalier",       "Technicien",          "Résoudre 50 tickets",                                   "🔧"),
+    ("paladin",         "Ingénieur Système",   "Résoudre 100 tickets",                                  "🧑‍💻"),
+    ("eclair",          "Hotfix",              "Résoudre un ticket le jour même (rapidité max)",        "⚡"),
     ("maitre_serveurs", "Maître des Serveurs", "Résoudre 10 tickets catégorie Serveur",                 "🖥️"),
-    ("plume_or",        "Plume d'Or",          "Créer un ticket avec score conformité 10/10",           "✒️"),
-    ("scribe_parfait",  "Scribe Parfait",      "10 tickets créés avec score conformité ≥ 8",            "📜"),
-    ("bapteme_feu",     "Baptême du Feu",      "Gagner son 1er combat en Arène",                       "🥊"),
-    ("gladiateur",      "Gladiateur",          "Gagner 5 combats en Arène",                            "⚔️"),
-    ("champion_arene",  "Champion de l'Arène", "Gagner 10 combats en Arène",                           "🏆"),
-    ("insaisissable",   "Insaisissable",        "Esquiver 3 fois dans le même combat",                  "💨"),
-    ("coup_de_grace",   "Coup de Grâce",       "Éliminer un adversaire avec un Coup Critique",         "💥"),
-    ("parieur",         "Parieur",             "Gagner un combat avec une mise > 0",                    "🎲"),
-    ("haut_risque",     "Haut Risque",         "Gagner un combat avec une mise ≥ 50 or",                "💰"),
-    ("ascension",       "Ascension",           "Atteindre le niveau 5",                                 "🌟"),
-    ("seigneur",        "Seigneur",            "Atteindre le niveau 10",                                "🔥"),
-    ("legende",         "Légende",             "Atteindre le niveau 15",                                "🌌"),
-    ("forgeron",           "Forgeron",             "Fabriquer son 1er équipement en Forge",                    "🔨"),
-    ("arsenal_complet",    "Arsenal Complet",      "Avoir arme + armure + amulette équipés simultanément",     "🧰"),
-    ("artisan",            "Artisan",              "Améliorer un équipement à +5",                             "⚒️"),
-    ("grand_maitre_forge", "Grand Maître Forgeron","Forger un équipement Tier 5",                              "🌟"),
-    ("set_legendaire",     "Set Légendaire",       "Équiper arme + armure + amulette tous en Tier 5",         "💎"),
-    ("perfection_absolue", "Perfection Absolue",   "Arme + armure + amulette Tier 5 tous améliorés à +20",    "👑"),
-    ("explorateur",        "Explorateur",          "Compléter sa 1ère expédition",                            "🗺️"),
-    ("routard",            "Routard",              "Compléter 10 expéditions",                                "🌍"),
-    ("chasseur_tresors",   "Chasseur de Trésors",  "Rapporter une Essence du Néant d'expédition",             "✨"),
-    ("invaincu",           "Invaincu",             "Remporter 3 combats consécutifs",                         "🔥"),
-    ("sans_pitie",         "Sans Pitié",           "Gagner un combat sans jamais utiliser Repos",             "💀"),
-    ("stakhanoviste",      "Stakhanoviste",        "Résoudre 5 tickets dans la même journée",                 "📋"),
+    ("plume_or",        "Doc Parfaite",        "Créer un ticket avec score conformité 10/10",           "📝"),
+    ("scribe_parfait",  "Rédacteur Technique", "10 tickets créés avec score conformité ≥ 8",            "📄"),
+    ("bapteme_feu",     "Premier Benchmark",   "Gagner son 1er duel au Benchmark",                     "🥊"),
+    ("gladiateur",      "Challenger",          "Gagner 5 duels au Benchmark",                          "⚔️"),
+    ("champion_arene",  "Champion Benchmark",  "Gagner 10 duels au Benchmark",                         "🏆"),
+    ("insaisissable",   "Low Latency",          "Esquiver 3 fois dans le même duel",                    "💨"),
+    ("coup_de_grace",   "Kill -9",             "Éliminer un adversaire avec un Coup Critique",         "💥"),
+    ("parieur",         "Parieur",             "Gagner un duel avec une mise > 0",                      "🎲"),
+    ("haut_risque",     "All-In",              "Gagner un duel avec une mise ≥ 50 crédits",             "💰"),
+    ("ascension",       "Montée en charge",    "Atteindre le niveau 5",                                 "🌟"),
+    ("seigneur",        "Senior",              "Atteindre le niveau 10",                                "🔥"),
+    ("legende",         "10x Engineer",        "Atteindre le niveau 15",                                "🌌"),
+    ("forgeron",           "Assembleur",           "Assembler son 1er composant à l'Atelier",                  "🔧"),
+    ("arsenal_complet",    "Setup Complet",        "Avoir processeur + sécurité + module équipés simultanément","🧰"),
+    ("artisan",            "Overclockeur",         "Améliorer un composant à +5",                              "⚙️"),
+    ("grand_maitre_forge", "Maître Assembleur",    "Assembler un composant Tier 5",                            "🌟"),
+    ("set_legendaire",     "Config Ultime",        "Équiper processeur + sécurité + module tous en Tier 5",   "💎"),
+    ("perfection_absolue", "Build Parfait",        "Processeur + sécurité + module Tier 5 tous améliorés à +20","👑"),
+    ("explorateur",        "Premier Scan",         "Compléter son 1er scan réseau",                           "📡"),
+    ("routard",            "Crawler",              "Compléter 10 scans réseau",                               "🌍"),
+    ("chasseur_tresors",   "Chasseur de Qubits",   "Rapporter un Qubit d'un scan réseau",                     "⚛️"),
+    ("invaincu",           "Uptime 100%",          "Remporter 3 duels consécutifs",                           "🔥"),
+    ("sans_pitie",         "No Mercy",             "Gagner un duel sans jamais utiliser Repos",               "💀"),
+    ("stakhanoviste",      "Batch Processor",      "Résoudre 5 tickets dans la même journée",                 "📋"),
     ("saison_champion_xp", "Champion de Saison",   "Terminer 1er au classement XP d'une saison",             "👑"),
-    ("saison_champion_pc", "Gladiateur de Saison", "Terminer 1er au classement Combat d'une saison",         "🏆"),
-    ("saison_podium",      "Héros de Saison",       "Figurer dans le top 3 d'un classement saisonnier",       "🎖️"),
+    ("saison_champion_pc", "Champion Benchmark de Saison", "Terminer 1er au classement Benchmark d'une saison","🏆"),
+    ("saison_podium",      "Podium de Saison",      "Figurer dans le top 3 d'un classement saisonnier",       "🎖️"),
 ]
 
 
 def _seed_badges(conn):
+    """Insère ou met à jour les badges de référence.
+
+    L'UPSERT garantit que le renommage d'un badge (nom/description/icône) se
+    propage aux badges déjà débloqués sans casser les clés étrangères
+    (`joueur_badges.badge_code` référence `code`, qui reste immuable).
+    """
     with conn.cursor() as cur:
         for code, nom, desc, icone in _BADGES_SEED:
             cur.execute(
                 """INSERT INTO badges (code, nom, description, icone)
-                   VALUES (%s, %s, %s, %s) ON CONFLICT (code) DO NOTHING""",
+                   VALUES (%s, %s, %s, %s)
+                   ON CONFLICT (code) DO UPDATE
+                       SET nom         = EXCLUDED.nom,
+                           description = EXCLUDED.description,
+                           icone       = EXCLUDED.icone""",
                 (code, nom, desc, icone),
             )
     conn.commit()

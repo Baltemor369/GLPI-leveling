@@ -4,11 +4,11 @@
 {% block content %}
 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
   <div>
-    <h1>⚔️ {{ joueur.username.upper() }}</h1>
-    <h3 style="margin-top:-8px;color:var(--gris)">Niveau {{ joueur.level }} &nbsp;·&nbsp; Aventurier</h3>
+    <h1>🖥️ {{ joueur.username.upper() }}</h1>
+    <h3 style="margin-top:-8px;color:var(--gris)">Niveau {{ joueur.level }} &nbsp;·&nbsp; Opérateur</h3>
   </div>
   <div class="stat-card" style="min-width:120px;padding:12px 20px">
-    <div class="stat-label">💰 OR</div>
+    <div class="stat-label">🪙 CRÉDITS</div>
     <div class="stat-value">{{ joueur.or_monnaie }}</div>
   </div>
 </div>
@@ -29,10 +29,10 @@
 
 <div class="grid-4" style="margin-bottom:20px">
   {% set stats = [
-    ('force_p',         '⚔️ FORCE',         joueur.force_p,         'Dégâts en combat'),
-    ('constitution_pv', '🛡️ CONSTITUTION',   joueur.constitution_pv, 'Points de vie max'),
-    ('agilite_vit',     '💨 AGILITÉ',        joueur.agilite_vit,     'Initiative & esquive'),
-    ('esprit_res',      '🔮 ESPRIT',         joueur.esprit_res,      'Résistance aux dégâts'),
+    ('force_p',         '⚡ CPU',            joueur.force_p,         'Puissance de calcul (dégâts)'),
+    ('constitution_pv', '🧠 RAM',           joueur.constitution_pv, 'Mémoire (points de vie)'),
+    ('agilite_vit',     '📶 DÉBIT',         joueur.agilite_vit,     'Bande passante (initiative & esquive)'),
+    ('esprit_res',      '🛡️ FIREWALL',       joueur.esprit_res,      'Pare-feu (résistance aux dégâts)'),
   ] %}
   {% for key, label, val, desc in stats %}
   <div>
@@ -55,10 +55,10 @@
 <div class="ornement" style="margin:20px 0">◆◆◆</div>
 
 <!-- Equipment -->
-<h3>🗡️ Équipement</h3>
-{% set stat_labels = {'force_p':'Force','esprit_res':'Résistance','constitution_pv':'PV','agilite_vit':'Agilité'} %}
+<h3>🧩 Équipement</h3>
+{% set stat_labels = {'force_p':'CPU','esprit_res':'Firewall','constitution_pv':'RAM','agilite_vit':'Débit'} %}
 <div class="grid-3" style="margin-bottom:20px">
-  {% for type_slot, slot_label in [('arme','⚔️ ARME'),('armure','🛡️ ARMURE'),('amul','📿 AMULETTE')] %}
+  {% for type_slot, slot_label in [('arme','⚡ PROCESSEUR'),('armure','🔒 SÉCURITÉ'),('amul','🧩 MODULE')] %}
   {% set item = equipes | selectattr('type','equalto',type_slot) | first | default(none) %}
   <div class="stat-card">
     <div class="stat-label">{{ slot_label }}</div>
@@ -69,7 +69,7 @@
     <div style="color:var(--or);font-size:0.9rem">+{{ item.valeur_bonus + (item.amelioration or 0) * 2 }} {{ stat_labels[item.bonus_stat] }}</div>
     {% else %}
     <div class="stat-value" style="font-size:1.05rem;opacity:0.35;margin:8px 0">— Vide —</div>
-    <div style="color:var(--gris);font-size:0.75rem">Forge un équipement</div>
+    <div style="color:var(--gris);font-size:0.75rem">Assemble un composant</div>
     {% endif %}
   </div>
   {% endfor %}
@@ -78,7 +78,7 @@
 <div class="ornement" style="margin:20px 0">◆◆◆</div>
 
 <!-- Recent tickets -->
-<h3>📜 Derniers tickets traités</h3>
+<h3>📋 Derniers tickets traités</h3>
 {% if not tickets %}
 <p style="color:var(--gris);font-style:italic">Aucun ticket traité pour l'instant.</p>
 {% else %}

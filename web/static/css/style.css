@@ -1,17 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+/* Polices : on s'appuie sur les piles système (monospace « terminal » + sans lisible).
+   La CSP (`font-src 'self'`) bloquant les CDN, aucun @import externe n'est utilisé ;
+   'JetBrains Mono'/'Inter' sont honorées si présentes localement, sinon fallback système. */
 
 /* ── Variables ──────────────────────────────────────────── */
+/* Thème « terminal » : les noms de variables sont conservés (héritage), seules
+   leurs valeurs passent d'une palette or/brun à une palette cyan/slate.
+   --or* = accent cyan, --brun* = fonds slate sombres, --parchemin = texte clair. */
 :root {
-    --or:         #c9a84c;
-    --or-clair:   #e8c96a;
-    --or-sombre:  #8a6a1a;
-    --rouge:      #8b1a1a;
-    --parchemin:  #f0ddb0;
-    --brun:       #2c1810;
-    --brun2:      #3d2314;
-    --brun3:      #1a0d06;
-    --gris:       #7a6a55;
-    --vert:       #2a5a2a;
+    --or:         #35c5f0;
+    --or-clair:   #7dd3fc;
+    --or-sombre:  #1e6a8a;
+    --rouge:      #dc2f5a;
+    --parchemin:  #d6e2ea;
+    --brun:       #0f172a;
+    --brun2:      #1e293b;
+    --brun3:      #0a0f1c;
+    --gris:       #7b8ba0;
+    --vert:       #16a34a;
     --sidebar-w:  240px;
 }
 
@@ -21,7 +26,7 @@
 html, body {
     background-color: var(--brun);
     color: var(--parchemin);
-    font-family: 'Crimson Text', Georgia, serif;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
     font-size: 16px;
     height: 100%;
 }
@@ -30,9 +35,9 @@ a { color: var(--or); text-decoration: none; }
 a:hover { color: var(--or-clair); }
 
 h1, h2, h3, h4 {
-    font-family: 'Cinzel', serif;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
     color: var(--or);
-    text-shadow: 0 0 8px rgba(201,168,76,0.4), 1px 2px 6px rgba(0,0,0,0.9);
+    text-shadow: 0 0 8px rgba(53,197,240,0.4), 1px 2px 6px rgba(0,0,0,0.9);
     letter-spacing: 1px;
 }
 h1 { font-size: 2rem; border-bottom: 1px solid var(--or-sombre); padding-bottom: 8px; margin-bottom: 16px; }
@@ -67,14 +72,14 @@ hr {
 }
 
 .sidebar-brand {
-    font-family: 'Cinzel', serif;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
     color: var(--or);
     font-size: 1rem;
     font-weight: 700;
     letter-spacing: 2px;
     text-align: center;
     padding: 20px 12px 12px;
-    text-shadow: 0 0 12px rgba(201,168,76,0.5);
+    text-shadow: 0 0 12px rgba(53,197,240,0.5);
 }
 
 .sidebar-nav { flex: 1; padding: 8px 0; }
@@ -83,17 +88,17 @@ hr {
     display: block;
     color: var(--parchemin);
     padding: 10px 16px;
-    font-family: 'Crimson Text', serif;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
     font-size: 0.95rem;
     transition: background 0.15s, color 0.15s;
     border-left: 3px solid transparent;
 }
 .nav-link:hover {
-    background: rgba(201,168,76,0.12);
+    background: rgba(53,197,240,0.12);
     color: var(--or);
 }
 .nav-link.active {
-    background: rgba(201,168,76,0.2);
+    background: rgba(53,197,240,0.2);
     border-left-color: var(--or);
     color: var(--or);
 }
@@ -136,7 +141,7 @@ hr {
     line-height: 16px;
     border-radius: 9px;
     vertical-align: middle;
-    box-shadow: 0 0 6px rgba(139,26,26,0.6);
+    box-shadow: 0 0 6px rgba(220,47,90,0.6);
 }
 .sidebar-player .player-saison {
     display: flex;
@@ -181,7 +186,7 @@ hr {
     padding: 10px 14px;
     border-radius: 4px;
     border: 1px solid var(--or-sombre);
-    background: rgba(61,35,20,0.85);
+    background: rgba(30,41,59,0.85);
     color: var(--parchemin);
     margin-bottom: 6px;
     font-size: 0.92rem;
@@ -190,15 +195,15 @@ hr {
 .flash-msg.error   { border-color: #8b1a1a; background: rgba(90,20,20,0.4);  color: #df8f8f; }
 .flash-msg.warning { border-color: #8a6a00; background: rgba(90,70,0,0.35);  color: #dfcf6f; }
 .flash-msg.info    { border-color: var(--or-sombre); }
-.flash-msg.loot    { border-color: var(--or); background: rgba(61,35,20,0.9); color: var(--or-clair); font-size: 1rem; }
+.flash-msg.loot    { border-color: var(--or); background: rgba(30,41,59,0.9); color: var(--or-clair); font-size: 1rem; }
 
 /* ── Buttons ────────────────────────────────────────────── */
 .btn {
     display: inline-block;
-    background: linear-gradient(135deg, #5c1010, var(--rouge));
+    background: linear-gradient(135deg, #12303f, var(--or-sombre));
     color: var(--or-clair);
     border: 1px solid var(--or-sombre);
-    font-family: 'Cinzel', serif;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
     font-size: 0.78rem;
     letter-spacing: 1px;
     border-radius: 3px;
@@ -210,9 +215,9 @@ hr {
     text-decoration: none;
 }
 .btn:hover {
-    background: linear-gradient(135deg, var(--rouge), #a02020);
-    box-shadow: 0 0 10px rgba(201,168,76,0.3), 0 2px 6px rgba(0,0,0,0.5);
-    color: var(--or-clair);
+    background: linear-gradient(135deg, var(--or-sombre), var(--or));
+    box-shadow: 0 0 10px rgba(53,197,240,0.4), 0 2px 6px rgba(0,0,0,0.5);
+    color: #0a0f1c;
 }
 .btn:disabled, .btn.disabled {
     opacity: 0.4;
@@ -234,7 +239,7 @@ hr {
 .form-label {
     display: block;
     color: var(--parchemin);
-    font-family: 'Cinzel', serif;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
     font-size: 0.78rem;
     letter-spacing: 1px;
     margin-bottom: 5px;
@@ -246,7 +251,7 @@ hr {
     border: 1px solid var(--or-sombre);
     border-radius: 3px;
     padding: 8px 10px;
-    font-family: 'Crimson Text', serif;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
     font-size: 1rem;
 }
 .form-input:focus {
@@ -261,9 +266,9 @@ input[type="number"].form-input { -moz-appearance: textfield; }
 
 /* ── Stat cards ─────────────────────────────────────────── */
 .stat-card {
-    background: linear-gradient(135deg, rgba(61,35,20,0.95) 0%, rgba(26,13,6,0.95) 100%);
+    background: linear-gradient(135deg, rgba(30,41,59,0.95) 0%, rgba(15,23,42,0.95) 100%);
     border: 1px solid var(--or-sombre);
-    box-shadow: 0 0 0 1px var(--brun3), inset 0 1px 0 rgba(201,168,76,0.2), 0 4px 16px rgba(0,0,0,0.6);
+    box-shadow: 0 0 0 1px var(--brun3), inset 0 1px 0 rgba(53,197,240,0.2), 0 4px 16px rgba(0,0,0,0.6);
     border-radius: 6px;
     padding: 16px 12px;
     text-align: center;
@@ -284,7 +289,7 @@ input[type="number"].form-input { -moz-appearance: textfield; }
 .stat-label {
     color: var(--gris);
     font-size: 0.7rem;
-    font-family: 'Cinzel', serif;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
     letter-spacing: 2px;
     text-transform: uppercase;
     margin-bottom: 6px;
@@ -293,8 +298,8 @@ input[type="number"].form-input { -moz-appearance: textfield; }
     color: var(--or-clair);
     font-size: 2rem;
     font-weight: 700;
-    font-family: 'Cinzel', serif;
-    text-shadow: 0 0 10px rgba(201,168,76,0.5);
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    text-shadow: 0 0 10px rgba(53,197,240,0.5);
 }
 .stat-desc {
     color: var(--gris);
@@ -317,14 +322,14 @@ input[type="number"].form-input { -moz-appearance: textfield; }
     height: 26px;
     width: 100%;
     overflow: hidden;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(201,168,76,0.1);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(53,197,240,0.1);
     margin: 8px 0 4px;
 }
 .xp-bar-fill {
-    background: linear-gradient(90deg, var(--rouge) 0%, #c47a1a 60%, var(--or) 100%);
+    background: linear-gradient(90deg, var(--or-sombre) 0%, #22a5d8 60%, var(--or) 100%);
     height: 100%;
     border-radius: 8px;
-    box-shadow: 0 0 8px rgba(201,168,76,0.6);
+    box-shadow: 0 0 8px rgba(53,197,240,0.6);
     transition: width 0.6s ease;
 }
 .xp-label {
@@ -345,7 +350,7 @@ input[type="number"].form-input { -moz-appearance: textfield; }
 
 /* ── Ticket row ─────────────────────────────────────────── */
 .ticket-row {
-    background: linear-gradient(90deg, rgba(61,35,20,0.8), rgba(26,13,6,0.6));
+    background: linear-gradient(90deg, rgba(30,41,59,0.8), rgba(15,23,42,0.6));
     border-left: 3px solid var(--or-sombre);
     border-radius: 0 4px 4px 0;
     padding: 10px 14px;
@@ -369,7 +374,7 @@ input[type="number"].form-input { -moz-appearance: textfield; }
     border-radius: 3px;
     padding: 1px 8px;
     font-size: 0.78rem;
-    font-family: 'Cinzel', serif;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
     letter-spacing: 1px;
 }
 .badge-nonconforme {
@@ -379,7 +384,7 @@ input[type="number"].form-input { -moz-appearance: textfield; }
     border-radius: 3px;
     padding: 1px 8px;
     font-size: 0.78rem;
-    font-family: 'Cinzel', serif;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
     letter-spacing: 1px;
 }
 
@@ -393,7 +398,7 @@ input[type="number"].form-input { -moz-appearance: textfield; }
 }
 .metric-label {
     color: var(--gris);
-    font-family: 'Cinzel', serif;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
     font-size: 0.72rem;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -401,7 +406,7 @@ input[type="number"].form-input { -moz-appearance: textfield; }
 }
 .metric-value {
     color: var(--or-clair);
-    font-family: 'Cinzel', serif;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
     font-size: 1.6rem;
     font-weight: 700;
 }
@@ -414,7 +419,7 @@ input[type="number"].form-input { -moz-appearance: textfield; }
     display: flex;
     align-items: center;
     gap: 12px;
-    background: linear-gradient(90deg, rgba(61,35,20,0.6), transparent);
+    background: linear-gradient(90deg, rgba(30,41,59,0.6), transparent);
     border-left: 2px solid var(--or-sombre);
     padding: 10px 14px;
     margin-bottom: 4px;
@@ -422,7 +427,7 @@ input[type="number"].form-input { -moz-appearance: textfield; }
     transition: border-left-color 0.2s;
 }
 .rank-row:hover { border-left-color: var(--or); }
-.rank-row.me    { border-left-color: var(--or); background: linear-gradient(90deg, rgba(201,168,76,0.1), transparent); }
+.rank-row.me    { border-left-color: var(--or); background: linear-gradient(90deg, rgba(53,197,240,0.1), transparent); }
 .rank-badge { font-size: 1.4rem; width: 40px; text-align: center; flex-shrink: 0; }
 .rank-name  { flex: 2; font-size: 1.05rem; }
 .rank-level { flex: 1; color: var(--gris); font-size: 0.9rem; }
@@ -432,20 +437,20 @@ input[type="number"].form-input { -moz-appearance: textfield; }
 .me-tag {
     display: inline-block;
     background: var(--or);
-    color: #1a0d00;
+    color: #0a0f1c;
     font-size: 0.6rem;
     padding: 1px 5px;
     border-radius: 3px;
     font-weight: bold;
     vertical-align: middle;
     margin-left: 6px;
-    font-family: 'Cinzel', serif;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
 }
 
 /* ── Combat bars (Arena) ────────────────────────────────── */
 .pv-bar-bg {
-    background: #1a0d00;
-    border: 1px solid #333;
+    background: #0a0f1c;
+    border: 1px solid #33465e;
     border-radius: 4px;
     height: 14px;
     margin-top: 4px;
@@ -464,17 +469,17 @@ input[type="number"].form-input { -moz-appearance: textfield; }
 .login-box {
     width: 360px;
     padding: 36px 32px;
-    background: linear-gradient(135deg, rgba(61,35,20,0.98) 0%, rgba(26,13,6,0.98) 100%);
+    background: linear-gradient(135deg, rgba(30,41,59,0.98) 0%, rgba(15,23,42,0.98) 100%);
     border: 1px solid var(--or-sombre);
     border-radius: 8px;
-    box-shadow: 0 0 40px rgba(0,0,0,0.8), 0 0 20px rgba(201,168,76,0.05);
+    box-shadow: 0 0 40px rgba(0,0,0,0.8), 0 0 20px rgba(53,197,240,0.05);
 }
 .login-title {
-    font-family: 'Cinzel', serif;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
     color: var(--or);
     font-size: 2rem;
     text-align: center;
-    text-shadow: 0 0 20px rgba(201,168,76,0.5);
+    text-shadow: 0 0 20px rgba(53,197,240,0.5);
     margin-bottom: 4px;
 }
 .login-sub {
@@ -486,7 +491,7 @@ input[type="number"].form-input { -moz-appearance: textfield; }
 }
 .login-label {
     display: block;
-    font-family: 'Cinzel', serif;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
     font-size: 0.75rem;
     letter-spacing: 1.5px;
     color: var(--parchemin);
@@ -502,8 +507,8 @@ input[type="number"].form-input { -moz-appearance: textfield; }
 
 /* ── Expédition / Forge ─────────────────────────────────── */
 .progress-bar-bg {
-    background: #1a0d00;
-    border: 1px solid #333;
+    background: #0a0f1c;
+    border: 1px solid #33465e;
     border-radius: 6px;
     height: 20px;
     margin: 8px 0;
@@ -517,7 +522,7 @@ input[type="number"].form-input { -moz-appearance: textfield; }
 }
 
 .details-block {
-    background: rgba(26,13,6,0.8);
+    background: rgba(15,23,42,0.8);
     border: 1px solid var(--or-sombre);
     border-radius: 4px;
     padding: 10px 14px;
@@ -526,7 +531,7 @@ input[type="number"].form-input { -moz-appearance: textfield; }
 }
 .details-block summary {
     color: var(--or);
-    font-family: 'Cinzel', serif;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
     font-size: 0.85rem;
     letter-spacing: 1px;
     user-select: none;
@@ -539,7 +544,7 @@ input[type="number"].form-input { -moz-appearance: textfield; }
     align-items: center;
     gap: 10px;
     padding: 8px 12px;
-    border-bottom: 1px solid rgba(138,106,26,0.3);
+    border-bottom: 1px solid rgba(53,197,240,0.3);
     font-size: 0.95rem;
 }
 .inv-row:last-child { border-bottom: none; }

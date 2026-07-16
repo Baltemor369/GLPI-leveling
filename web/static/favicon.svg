@@ -1,24 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
-    <linearGradient id="lame" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#f0ddb0"/>
-      <stop offset="0.5" stop-color="#e8c96a"/>
-      <stop offset="1" stop-color="#c9a84c"/>
+    <linearGradient id="puce" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7dd3fc"/>
+      <stop offset="0.5" stop-color="#35c5f0"/>
+      <stop offset="1" stop-color="#1e6a8a"/>
     </linearGradient>
   </defs>
 
   <!-- Fond -->
-  <rect x="2" y="2" width="60" height="60" rx="14" fill="#1a0d06" stroke="#8a6a1a" stroke-width="2"/>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#0a0f1c" stroke="#1e6a8a" stroke-width="2"/>
 
-  <!-- Épée -->
-  <g stroke="#8a6a1a" stroke-width="1" stroke-linejoin="round">
-    <!-- Lame -->
-    <path d="M32 9 L36 16 L36 42 L32 47 L28 42 L28 16 Z" fill="url(#lame)"/>
-    <!-- Garde -->
-    <rect x="18" y="42" width="28" height="5" rx="2.5" fill="#c9a84c"/>
-    <!-- Poignée -->
-    <rect x="30" y="47" width="4" height="8" fill="#8b1a1a" stroke="#8a6a1a"/>
-    <!-- Pommeau -->
-    <circle cx="32" cy="57" r="3.5" fill="#c9a84c"/>
+  <!-- Puce / CPU -->
+  <g stroke="#1e6a8a" stroke-width="1.5" stroke-linecap="round">
+    <!-- Broches -->
+    <g stroke="#35c5f0">
+      <line x1="24" y1="8"  x2="24" y2="16"/>
+      <line x1="32" y1="8"  x2="32" y2="16"/>
+      <line x1="40" y1="8"  x2="40" y2="16"/>
+      <line x1="24" y1="48" x2="24" y2="56"/>
+      <line x1="32" y1="48" x2="32" y2="56"/>
+      <line x1="40" y1="48" x2="40" y2="56"/>
+      <line x1="8"  y1="24" x2="16" y2="24"/>
+      <line x1="8"  y1="32" x2="16" y2="32"/>
+      <line x1="8"  y1="40" x2="16" y2="40"/>
+      <line x1="48" y1="24" x2="56" y2="24"/>
+      <line x1="48" y1="32" x2="56" y2="32"/>
+      <line x1="48" y1="40" x2="56" y2="40"/>
+    </g>
   </g>
+
+  <!-- Corps du processeur -->
+  <rect x="16" y="16" width="32" height="32" rx="4" fill="url(#puce)" stroke="#1e6a8a" stroke-width="1.5"/>
+  <!-- Die central -->
+  <rect x="25" y="25" width="14" height="14" rx="2" fill="#0a0f1c" stroke="#7dd3fc" stroke-width="1.5"/>
 </svg>

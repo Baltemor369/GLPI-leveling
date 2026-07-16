@@ -83,7 +83,7 @@ def _render_attente_fin(message):
 
 
 def _render_fin(c, joueur_id, nouveaux_badges=None):
-    derniere_ligne = c["log_combat"].strip().split("\n")[-1] if c.get("log_combat") else "Combat terminé."
+    derniere_ligne = c["log_combat"].strip().split("\n")[-1] if c.get("log_combat") else "Duel terminé."
     return render_template(
         "partials/combat_fin.html",
         message=derniere_ligne,
@@ -148,19 +148,19 @@ def combat_partial():
     joueur_id = session["joueur_id"]
 
     if combat_id is None:
-        return _render_fin_message("Combat introuvable.")
+        return _render_fin_message("Duel introuvable.")
 
     conn = get_conn()
     try:
         c = get_combat(conn, combat_id)
         if not c:
-            return _render_fin_message("Combat introuvable.")
+            return _render_fin_message("Duel introuvable.")
         if joueur_id not in (c["attaquant_id"], c["defenseur_id"]):
             return _render_fin_message("Accès refusé.")
         if c["statut"] != "en_cours":
             if c["statut"] == "termine":
                 return _render_fin(c, joueur_id)
-            return _render_fin_message("Ce combat n'est plus disponible.")
+            return _render_fin_message("Ce duel n'est plus disponible.")
         ctx = _build_combat_ctx(conn, c, joueur_id)
     finally:
         conn.close()
@@ -271,7 +271,7 @@ def action():
         if not c or c["statut"] != "en_cours":
             if c and c["statut"] == "termine":
                 return _render_fin(c, joueur_id, nouveaux_badges)
-            return _render_fin_message("Combat terminé.")
+            return _render_fin_message("Duel terminé.")
 
         ctx = _build_combat_ctx(conn, c, joueur_id)
     finally:

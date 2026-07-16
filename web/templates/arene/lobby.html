@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
-{% block title %}Arène — GlpiLeveling{% endblock %}
+{% block title %}Benchmark — GlpiLeveling{% endblock %}
 
 {% block content %}
-<h1>⚔️ Arène des Aventuriers</h1>
+<h1>⚡ Benchmark PvP</h1>
 <p style="color:var(--gris);font-style:italic;margin-top:-8px;margin-bottom:16px">
-  Défie un collègue en combat singulier. Que le meilleur gagne !
+  Défie un collègue en duel de performance. Que le meilleur gagne !
 </p>
 <hr>
 
 {% if dernier %}
-<h3>📜 Dernier combat</h3>
+<h3>📋 Dernier duel</h3>
 <div class="ticket-row" style="margin-bottom:16px">
   <strong>{{ dernier.nom_attaquant | e }}</strong> vs <strong>{{ dernier.nom_defenseur | e }}</strong>
   <div class="ticket-meta" style="white-space:pre-line">{{ dernier.log_combat[-300:] | e }}</div>
@@ -20,14 +20,14 @@
 <h3>Choisir un adversaire</h3>
 
 {% if not adversaires %}
-<div class="flash-msg info">Aucun autre aventurier disponible pour l'instant.</div>
+<div class="flash-msg info">Aucun autre opérateur disponible pour l'instant.</div>
 {% else %}
 
 <form method="post" action="{{ url_for('arene.defier') }}" id="defi-form">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="form-group">
     <label class="form-label" for="mise-input">
-      Mise (or) — ton trésor : {{ moi.or_monnaie if moi else 0 }} or
+      Mise (crédits) — ton solde : {{ moi.or_monnaie if moi else 0 }} crédits
     </label>
     <input class="form-input" type="number" id="mise-input" name="mise"
            value="0" min="0" step="10" style="width:180px">
@@ -39,11 +39,11 @@
     <div style="flex:3;font-size:1rem"><strong>{{ adv.username | e }}</strong></div>
     <div style="flex:1;color:var(--gris)">Niv. {{ adv.level }}</div>
     <div style="flex:1.5;color:var(--or)">⭐ {{ adv.xp }} XP</div>
-    <div style="flex:1.5;color:#e87070">⚔️ {{ adv.victoires }} victoires</div>
+    <div style="flex:1.5;color:#e87070">⚡ {{ adv.victoires }} victoires</div>
     <div style="flex:1.5;color:#6ab0e8">🏆 {{ adv.points_combat }} PC</div>
     <div>
       <button type="submit" name="defenseur_id" value="{{ adv.id }}" class="btn btn-sm">
-        ⚔️ Défier
+        ⚡ Défier
       </button>
     </div>
   </div>

@@ -7,21 +7,21 @@ import badge_engine
 forge_bp = Blueprint("forge", __name__)
 
 CATALOGUE = [
-    {"nom": "Épée en Fer",         "type": "arme",   "bonus_stat": "force_p",         "valeur_bonus": 5,  "cout": 50,   "tier": 1, "passif_code": None,              "passif_desc": None},
-    {"nom": "Lame d'Acier",        "type": "arme",   "bonus_stat": "force_p",         "valeur_bonus": 12, "cout": 150,  "tier": 2, "passif_code": None,              "passif_desc": None},
-    {"nom": "Épée de Mithril",     "type": "arme",   "bonus_stat": "force_p",         "valeur_bonus": 22, "cout": 250,  "tier": 3, "passif_code": "saignement",      "passif_desc": "⚡ Saignement — 20% chance +3 dégâts bonus"},
-    {"nom": "Lame Runique",        "type": "arme",   "bonus_stat": "force_p",         "valeur_bonus": 35, "cout": 500,  "tier": 4, "passif_code": "vampirisme",      "passif_desc": "💉 Vampirisme — récupère 25% des dégâts infligés"},
-    {"nom": "Épée du Néant",       "type": "arme",   "bonus_stat": "force_p",         "valeur_bonus": 50, "cout": 2000, "tier": 5, "passif_code": "execution",       "passif_desc": "💀 Exécution — adverse < 20% PV → dégâts ×1.5"},
-    {"nom": "Tunique de Cuir",     "type": "armure", "bonus_stat": "esprit_res",      "valeur_bonus": 5,  "cout": 50,   "tier": 1, "passif_code": None,              "passif_desc": None},
-    {"nom": "Cotte de Mailles",    "type": "armure", "bonus_stat": "esprit_res",      "valeur_bonus": 12, "cout": 150,  "tier": 2, "passif_code": None,              "passif_desc": None},
-    {"nom": "Armure de Plates",    "type": "armure", "bonus_stat": "esprit_res",      "valeur_bonus": 22, "cout": 250,  "tier": 3, "passif_code": "bouclier_pv",     "passif_desc": "🔰 Bouclier — +5% RES basé sur vos PV max"},
-    {"nom": "Armure Runique",      "type": "armure", "bonus_stat": "esprit_res",      "valeur_bonus": 35, "cout": 500,  "tier": 4, "passif_code": "epines",          "passif_desc": "🔥 Épines — renvoie 15% des dégâts reçus"},
-    {"nom": "Armure du Néant",     "type": "armure", "bonus_stat": "esprit_res",      "valeur_bonus": 50, "cout": 2000, "tier": 5, "passif_code": "immunite",        "passif_desc": "🛡️ Immunité — 25% chance d'ignorer les dégâts"},
-    {"nom": "Amulette de Vitalité","type": "amul",   "bonus_stat": "constitution_pv", "valeur_bonus": 8,  "cout": 50,   "tier": 1, "passif_code": None,              "passif_desc": None},
-    {"nom": "Bague de Célérité",   "type": "amul",   "bonus_stat": "agilite_vit",     "valeur_bonus": 6,  "cout": 150,  "tier": 2, "passif_code": None,              "passif_desc": None},
-    {"nom": "Pendentif de l'Aube", "type": "amul",   "bonus_stat": "constitution_pv", "valeur_bonus": 15, "cout": 250,  "tier": 3, "passif_code": "regeneration",    "passif_desc": "💚 Régénération — récupère 5% PV max/tour"},
-    {"nom": "Talisman Runique",    "type": "amul",   "bonus_stat": "agilite_vit",     "valeur_bonus": 10, "cout": 500,  "tier": 4, "passif_code": "celerite_niveau", "passif_desc": "💨 Célérité — +0.5% esquive par niveau"},
-    {"nom": "Orbe du Néant",       "type": "amul",   "bonus_stat": "constitution_pv", "valeur_bonus": 20, "cout": 2000, "tier": 5, "passif_code": "transcendance",   "passif_desc": "✨ Transcendance — toutes les stats +1 par 2 niveaux"},
+    {"nom": "Pentium I",           "type": "arme",   "bonus_stat": "force_p",         "valeur_bonus": 5,  "cout": 50,   "tier": 1, "passif_code": None,              "passif_desc": None},
+    {"nom": "Core i3",             "type": "arme",   "bonus_stat": "force_p",         "valeur_bonus": 12, "cout": 150,  "tier": 2, "passif_code": None,              "passif_desc": None},
+    {"nom": "Core i5",             "type": "arme",   "bonus_stat": "force_p",         "valeur_bonus": 22, "cout": 250,  "tier": 3, "passif_code": "saignement",      "passif_desc": "⚡ Overclock — 20% chance +3 dégâts bonus"},
+    {"nom": "Core i7",             "type": "arme",   "bonus_stat": "force_p",         "valeur_bonus": 35, "cout": 500,  "tier": 4, "passif_code": "vampirisme",      "passif_desc": "💾 Cache Hit — récupère 25% des dégâts infligés"},
+    {"nom": "CPU Quantique",       "type": "arme",   "bonus_stat": "force_p",         "valeur_bonus": 50, "cout": 2000, "tier": 5, "passif_code": "execution",       "passif_desc": "💀 Kill Process — adverse < 20% PV → dégâts ×1.5"},
+    {"nom": "Pare-feu basique",    "type": "armure", "bonus_stat": "esprit_res",      "valeur_bonus": 5,  "cout": 50,   "tier": 1, "passif_code": None,              "passif_desc": None},
+    {"nom": "Antivirus",           "type": "armure", "bonus_stat": "esprit_res",      "valeur_bonus": 12, "cout": 150,  "tier": 2, "passif_code": None,              "passif_desc": None},
+    {"nom": "Chiffrement AES",     "type": "armure", "bonus_stat": "esprit_res",      "valeur_bonus": 22, "cout": 250,  "tier": 3, "passif_code": "bouclier_pv",     "passif_desc": "🧱 Sandbox — +5% RES basé sur votre RAM max"},
+    {"nom": "IDS/IPS",             "type": "armure", "bonus_stat": "esprit_res",      "valeur_bonus": 35, "cout": 500,  "tier": 4, "passif_code": "epines",          "passif_desc": "🔥 Honeypot — renvoie 15% des dégâts reçus"},
+    {"nom": "Zero Trust",          "type": "armure", "bonus_stat": "esprit_res",      "valeur_bonus": 50, "cout": 2000, "tier": 5, "passif_code": "immunite",        "passif_desc": "🛡️ Air Gap — 25% chance d'ignorer les dégâts"},
+    {"nom": "Barrette RAM",        "type": "amul",   "bonus_stat": "constitution_pv", "valeur_bonus": 8,  "cout": 50,   "tier": 1, "passif_code": None,              "passif_desc": None},
+    {"nom": "Carte réseau",        "type": "amul",   "bonus_stat": "agilite_vit",     "valeur_bonus": 6,  "cout": 150,  "tier": 2, "passif_code": None,              "passif_desc": None},
+    {"nom": "SSD NVMe",            "type": "amul",   "bonus_stat": "constitution_pv", "valeur_bonus": 15, "cout": 250,  "tier": 3, "passif_code": "regeneration",    "passif_desc": "💾 Auto-heal — récupère 5% RAM max/tour"},
+    {"nom": "Fibre optique",       "type": "amul",   "bonus_stat": "agilite_vit",     "valeur_bonus": 10, "cout": 500,  "tier": 4, "passif_code": "celerite_niveau", "passif_desc": "📶 Low Latency — +0.5% esquive par niveau"},
+    {"nom": "Cœur IA",             "type": "amul",   "bonus_stat": "constitution_pv", "valeur_bonus": 20, "cout": 2000, "tier": 5, "passif_code": "transcendance",   "passif_desc": "✨ Machine Learning — toutes les stats +1 par 2 niveaux"},
 ]
 
 MATERIAUX_REQUIS = {
@@ -30,13 +30,13 @@ MATERIAUX_REQUIS = {
     5: {"essence_neant":   1},
 }
 
-TIER_COLORS = {1: "#7a6a55", 2: "#8fbf8f", 3: "#6ab0e8", 4: "#c9a84c", 5: "#e05c5c"}
-STAT_LABELS = {"force_p": "Force", "esprit_res": "Résistance", "constitution_pv": "PV", "agilite_vit": "Agilité"}
-MAT_NOMS    = {"bois_chene": "🌲 Bois de Chêne", "minerai_fer": "⚙️ Minerai de Fer",
-               "cristal_runique": "💎 Cristal Runique", "essence_neant": "✨ Essence du Néant"}
+TIER_COLORS = {1: "#7a6a55", 2: "#8fbf8f", 3: "#6ab0e8", 4: "#35c5f0", 5: "#e05c5c"}
+STAT_LABELS = {"force_p": "CPU", "esprit_res": "Firewall", "constitution_pv": "RAM", "agilite_vit": "Débit"}
+MAT_NOMS    = {"bois_chene": "🔌 Câble réseau", "minerai_fer": "🔩 Silicium",
+               "cristal_runique": "🔷 Circuit imprimé", "essence_neant": "⚛️ Qubit"}
 
 # Améliorer un équipement coûte 60% du coût de base, croît avec le palier,
-# et bénéficie d'une remise de 30% si le joueur possède du bois de chêne.
+# et bénéficie d'une remise de 30% si le joueur possède du câble réseau.
 COUT_UPGRADE_RATIO = 0.6
 REMISE_BOIS        = 0.7
 AMELIORATION_MAX   = 20
@@ -129,7 +129,7 @@ def acheter():
             )
             if cur.fetchone() is None:
                 conn.rollback()
-                flash("Or insuffisant.", "error")
+                flash("Crédits insuffisants.", "error")
                 return redirect(url_for("forge.index"))
             cur.execute(
                 """INSERT INTO equipements
@@ -151,7 +151,7 @@ def acheter():
         nouveaux = badge_engine.verifier_badges_forge(conn, joueur_id)
         flash(f"✅ {item['nom']} forgé !", "success")
         for code in nouveaux:
-            flash(f"🏅 Badge débloqué : {code} !", "success")
+            flash(f"🎖️ Certification débloquée : {code} !", "success")
     finally:
         conn.close()
 
@@ -182,7 +182,7 @@ def equiper(equip_id):
         conn.commit()
         nouveaux = badge_engine.verifier_badges_forge(conn, joueur_id)
         for code in nouveaux:
-            flash(f"🏅 Badge débloqué : {code} !", "success")
+            flash(f"🎖️ Certification débloquée : {code} !", "success")
     finally:
         conn.close()
     return redirect(url_for("forge.index"))
@@ -221,7 +221,7 @@ def ameliorer(equip_id):
             )
             if cur.fetchone() is None:
                 conn.rollback()
-                flash("Or insuffisant.", "error")
+                flash("Crédits insuffisants.", "error")
                 return redirect(url_for("forge.index"))
 
             # Consommation bois dans la même transaction

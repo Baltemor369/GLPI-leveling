@@ -88,7 +88,7 @@ def verifier_badges_conformite(conn, createur_id: int | None, score_conformite: 
 def verifier_badges_combat(conn, vainqueur_id: int, mise: int,
                             action_gagnante: str, log_combat: str,
                             username_vainqueur: str) -> list:
-    """Badges déclenchés après une victoire en Arène."""
+    """Certifications déclenchées après une victoire au Benchmark (PvP)."""
     nouveaux = []
 
     wins = _count_victoires(conn, vainqueur_id)

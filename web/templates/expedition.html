@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
-{% block title %}Expédition — GlpiLeveling{% endblock %}
+{% block title %}Scan réseau — GlpiLeveling{% endblock %}
 
 {% block content %}
-<h1>🗺️ Expédition</h1>
+<h1>📡 Scan réseau</h1>
 <p style="color:var(--gris);font-style:italic;margin-top:-8px;margin-bottom:16px">
-  Pars en mission pour rapporter matériaux et richesses. Durée : 2 heures.
+  Lance un scan pour récupérer des composants et des crédits. Durée : 2 heures.
 </p>
 <hr>
 
 <!-- Matériaux -->
-<h3>🎒 Vos matériaux</h3>
+<h3>🎒 Vos composants</h3>
 <div class="grid-5" style="margin-bottom:16px">
   {% for loot in loot_table %}
   <div class="stat-card" style="text-align:center">
@@ -23,10 +23,10 @@
 {% if pity > 0 %}
 {% if pity >= pity_seuil %}
 <div class="flash-msg warning">
-  🔮 Pity Essence : <strong>{{ pity }}/{{ pity_seuil }}</strong> — Garantie active : prochaine expédition drop Essence !
+  ⚛️ Pity Qubit : <strong>{{ pity }}/{{ pity_seuil }}</strong> — Garantie active : le prochain scan drop un Qubit !
 </div>
 {% else %}
-<div class="flash-msg info">🔮 Pity Essence : {{ pity }}/{{ pity_seuil }} expéditions sans Essence du Néant</div>
+<div class="flash-msg info">⚛️ Pity Qubit : {{ pity }}/{{ pity_seuil }} scans sans Qubit</div>
 {% endif %}
 {% endif %}
 <hr>
@@ -45,7 +45,7 @@
     {% endfor %}
   </div>
   <p style="color:var(--gris);font-size:0.8rem;margin-top:8px">
-    3 rolls par expédition • Pity Essence garantie à {{ pity_seuil }} expéditions sans en obtenir
+    3 rolls par scan • Pity Qubit garanti à {{ pity_seuil }} scans sans en obtenir
   </p>
 </details>
 <hr>

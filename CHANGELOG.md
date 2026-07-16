@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.8.0] — 2026-07-16
+
+### Refonte thématique : médiéval → informatique
+Bascule complète de l'univers dark-fantasy médiéval vers un thème **composants informatiques**
+(le technicien devient un **Opérateur**, son personnage un **poste de travail**). Les identifiants
+internes (routes, codes badges, `materiau_code`, colonnes SQL, `passif_code`) restent **inchangés** :
+seul l'affichage change. Migration rétroactive incluse.
+
+- **Modules renommés** : Aventurier→**Poste**, Forge→**Atelier**, Arène→**Benchmark**,
+  Expédition→**Scan réseau**, Journal→**Logs**, Badges→**Certifications** (Classement conservé)
+- **Stats** : Force→**CPU**, Constitution→**RAM**, Agilité→**Débit**, Esprit→**Firewall**
+- **Monnaie** : Or→**Crédits** (colonne `or_monnaie` inchangée)
+- **15 objets Forge** re-thématisés : armes→processeurs (Pentium I → CPU Quantique),
+  armures→sécurité (Pare-feu basique → Zero Trust), amulettes→modules (Barrette RAM → Cœur IA)
+- **5 matériaux** : Or→Crédits, Bois de Chêne→**Câble réseau**, Minerai de Fer→**Silicium**,
+  Cristal Runique→**Circuit imprimé**, Essence du Néant→**Qubit**
+- **31 certifications** (ex-badges) renommées : Chevalier→Technicien, Paladin→Ingénieur Système,
+  Forgeron→Assembleur, Gladiateur→Challenger, etc.
+
+### Visuel
+- Palette dark-fantasy or/brun/parchemin → thème **« terminal » slate/cyan** (variables CSS
+  conservées, valeurs remplacées ; glows dorés → cyan)
+- Polices Cinzel/Crimson → **piles monospace/système** (plus d'`@import` externe : la CSP
+  `font-src 'self'` bloquait déjà les CDN, fallback système instantané et sans appel tiers)
+- **Favicon** épée dorée → **puce/CPU** cyan
+
+### Base de données (migration rétroactive, non cassante)
+- `_seed_badges` passe en **UPSERT** (`ON CONFLICT DO UPDATE`) : les certifications déjà
+  débloquées prennent les nouveaux noms/icônes au démarrage (codes/FK intacts)
+- **Migration #9** : `UPDATE equipements` renomme les composants déjà possédés (apostrophes
+  SQL échappées, idempotente)
+
+### Tests
+- 4 tests d'assertions de chaînes mis à jour (`tests/test_web_routes.py`) — total **160 tests** au vert
+
 ## [1.7.1] — 2026-06-22
 
 ### Nouveautés

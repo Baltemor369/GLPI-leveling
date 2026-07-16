@@ -16,16 +16,16 @@
 
   <!-- ── Sidebar ───────────────────────────────────────── -->
   <aside class="sidebar">
-    <div class="sidebar-brand">⚔ GLPILEVELING</div>
+    <div class="sidebar-brand">🖥️ GLPILEVELING</div>
 
     <nav class="sidebar-nav">
-      <a href="{{ url_for('aventurier.index') }}"    class="nav-link {% if active=='aventurier'  %}active{% endif %}"><span>⚔️ Aventurier</span></a>
-      <a href="{{ url_for('classement.index') }}"    class="nav-link {% if active=='classement'  %}active{% endif %}"><span>🏆 Classement</span></a>
-      <a href="{{ url_for('journal.index') }}"       class="nav-link {% if active=='journal'     %}active{% endif %}"><span>📜 Journal</span></a>
-      <a href="{{ url_for('forge.index') }}"         class="nav-link {% if active=='forge'       %}active{% endif %}"><span>🔨 Forge</span></a>
-      <a href="{{ url_for('arene.index') }}"         class="nav-link {% if active=='arene'       %}active{% endif %}"><span>⚔️ Arène</span></a>
-      <a href="{{ url_for('badges.index') }}"        class="nav-link {% if active=='badges'      %}active{% endif %}"><span>🏅 Badges</span></a>
-      <a href="{{ url_for('expedition.index') }}"    class="nav-link {% if active=='expedition'  %}active{% endif %}"><span>🗺️ Expédition</span></a>
+      <a href="{{ url_for('aventurier.index') }}"    class="nav-link {% if active=='aventurier'  %}active{% endif %}"><span>🖥️ Poste</span></a>
+      <a href="{{ url_for('classement.index') }}"    class="nav-link {% if active=='classement'  %}active{% endif %}"><span>📊 Classement</span></a>
+      <a href="{{ url_for('journal.index') }}"       class="nav-link {% if active=='journal'     %}active{% endif %}"><span>📋 Logs</span></a>
+      <a href="{{ url_for('forge.index') }}"         class="nav-link {% if active=='forge'       %}active{% endif %}"><span>🔧 Atelier</span></a>
+      <a href="{{ url_for('arene.index') }}"         class="nav-link {% if active=='arene'       %}active{% endif %}"><span>⚡ Benchmark</span></a>
+      <a href="{{ url_for('badges.index') }}"        class="nav-link {% if active=='badges'      %}active{% endif %}"><span>🎖️ Certifications</span></a>
+      <a href="{{ url_for('expedition.index') }}"    class="nav-link {% if active=='expedition'  %}active{% endif %}"><span>📡 Scan réseau</span></a>
     </nav>
 
     {% if sidebar_joueur %}
@@ -39,7 +39,7 @@
         {% endif %}
       </div>
       <div class="player-xp-restant">{{ sidebar_xp_restant }} XP avant le niv. {{ sidebar_joueur.level + 1 }}</div>
-      <div class="player-or">💰 {{ sidebar_joueur.or_monnaie }} or</div>
+      <div class="player-or">🪙 {{ sidebar_joueur.or_monnaie }} crédits</div>
 
       {% if sidebar_saison %}
       <div class="player-saison">

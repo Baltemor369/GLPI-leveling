@@ -197,11 +197,11 @@ def jouer_action(conn, combat_id: int, joueur_id: int, action_id: str) -> dict:
         delta_pc   = 0
         extra_logs = []
 
-        # ── Régénération (Pendentif de l'Aube T3) — début de tour ────────────
+        # ── Auto-heal (SSD NVMe T3) — début de tour ──────────────────────────
         if _passif(eq_att, "amul") == "regeneration":
             regen = max(1, round(pv_max(attaqueur, eq_att) * 0.05))
             pv_att_now = min(pv_max(attaqueur, eq_att), pv_att_now + regen)
-            extra_logs.append(f"  ↺ {attaqueur['username']} Régénération (+{regen} PV)")
+            extra_logs.append(f"  ↺ {attaqueur['username']} Auto-heal (+{regen} PV)")
 
         log_ligne = f"  {attaqueur['username']} → {label}"
 
@@ -220,39 +220,39 @@ def jouer_action(conn, combat_id: int, joueur_id: int, action_id: str) -> dict:
                 log_ligne += f" — ESQUIVÉ ! ({cible['username']} : {pv_def_now} PV)"
 
             else:
-                # ── Immunité (Armure du Néant T5) ────────────────────────────
+                # ── Air Gap (Zero Trust T5) ──────────────────────────────────
                 if _passif(eq_def, "armure") == "immunite" and random.random() < 0.25:
-                    log_ligne += f" — IMMUNITÉ ! ({cible['username']} : {pv_def_now} PV)"
+                    log_ligne += f" — AIR GAP ! ({cible['username']} : {pv_def_now} PV)"
 
                 else:
                     res    = resistance_effective(cible, eq_def)
                     degats = max(1, int(force * multiplicateur) - res)
 
-                    # ── Exécution (Épée du Néant T5) ─────────────────────────
+                    # ── Kill Process (CPU Quantique T5) ──────────────────────
                     if _passif(eq_att, "arme") == "execution":
                         if pv_def_now < pv_max(cible, eq_def) * 0.20:
                             degats = round(degats * 1.5)
-                            log_ligne += " [💀Exécution]"
+                            log_ligne += " [💀Kill Process]"
 
-                    # ── Saignement (Épée de Mithril T3) ──────────────────────
+                    # ── Overclock (Core i5 T3) ───────────────────────────────
                     if _passif(eq_att, "arme") == "saignement" and random.random() < 0.20:
                         degats += 3
-                        log_ligne += " [⚡Saignement]"
+                        log_ligne += " [⚡Overclock]"
 
                     pv_def_now = max(0, pv_def_now - degats)
                     log_ligne += f" — {degats} dégâts ! ({cible['username']} : {pv_def_now} PV)"
 
-                    # ── Vampirisme (Lame Runique T4) ──────────────────────────
+                    # ── Cache Hit (Core i7 T4) ────────────────────────────────
                     if _passif(eq_att, "arme") == "vampirisme" and degats > 0:
                         soin_vamp = max(1, round(degats * 0.25))
                         pv_att_now = min(pv_max(attaqueur, eq_att), pv_att_now + soin_vamp)
-                        log_ligne += f" [💉+{soin_vamp} PV]"
+                        log_ligne += f" [💾+{soin_vamp} PV]"
 
-                    # ── Épines (Armure Runique T4) ────────────────────────────
+                    # ── Honeypot (IDS/IPS T4) ─────────────────────────────────
                     if _passif(eq_def, "armure") == "epines" and degats > 0:
                         reflet = max(1, round(degats * 0.15))
                         pv_att_now = max(0, pv_att_now - reflet)
-                        log_ligne += f" [🔥Épines -{reflet}]"
+                        log_ligne += f" [🔥Honeypot -{reflet}]"
 
         # ── Construire le log final ───────────────────────────────────────────
         nouveau_log = combat["log_combat"]
